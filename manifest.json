@@ -2,7 +2,7 @@
   "name": "Complete Expense Manager",
   "short_name": "Expense Manager",
   "description": "Complete financial tracking app - personal expenses, trip splitting, lending tracker",
-  "start_url": "https://dinkan2016.github.io/expns/",
+  "start_url": "/expns/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#667eea",
