@@ -6,7 +6,6 @@
     <meta name="theme-color" content="#667eea">
     <title>Complete Expense Tracker</title>
     <link rel="manifest" href="manifest.json">
-    <meta name="description" content="Complete expense management system">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: "Segoe UI", Tahoma, sans-serif; background: #f8f9fa; }
@@ -17,7 +16,7 @@
         .icon { font-size: 32px; }
         .title-text h1 { font-size: 24px; margin: 0; }
         .title-text p { font-size: 11px; opacity: 0.9; }
-        .header-controls { display: flex; gap: 10px; align-items: center; }
+        .header-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
         .header-info { font-size: 12px; background: rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 6px; }
         select, input[type="month"] { padding: 8px 12px; border: none; border-radius: 6px; background: rgba(255,255,255,0.2); color: white; font-weight: 600; cursor: pointer; }
         .tabs { display: flex; gap: 0; border-bottom: 2px solid rgba(255,255,255,0.3); overflow-x: auto; }
@@ -25,16 +24,17 @@
         .tab.active { border-bottom: 3px solid white; background: rgba(255,255,255,0.1); }
         .main { max-width: 1000px; margin: 0 auto; padding: 20px; }
         .card { background: white; border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 16px; }
-        .btn { padding: 8px 12px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 12px; }
+        .btn { padding: 8px 12px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 12px; margin-right: 6px; margin-bottom: 6px; }
         .btn-primary { background: #667eea; color: white; }
         .btn-secondary { background: #4ECDC4; color: white; }
         .btn-success { background: #6BCF7F; color: white; }
         .btn-danger { background: #FF6B6B; color: white; }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-warning { background: #FFB84D; color: white; }
+        .btn:hover { opacity: 0.9; }
         .form-group { margin-bottom: 12px; }
         .label { display: block; font-weight: 600; font-size: 12px; margin-bottom: 6px; }
         .input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 12px; }
-        .error { color: #FF6B6B; font-size: 11px; margin-top: 4px; }
+        textarea.input { min-height: 60px; resize: vertical; }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 16px; }
         .summary-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 16px; border-radius: 10px; text-align: center; }
@@ -54,6 +54,11 @@
         .balance { padding: 6px; border-radius: 4px; margin-top: 6px; font-size: 12px; font-weight: 700; }
         .balance-positive { background: #f8d7da; color: #721c24; }
         .balance-negative { background: #d4edda; color: #155724; }
+        .comment-box { background: #f0f7ff; padding: 8px; border-radius: 6px; margin-top: 8px; font-size: 11px; border-left: 3px solid #667eea; }
+        .receipt-indicator { font-size: 11px; color: #4ECDC4; margin-top: 4px; }
+        .member-badge { display: inline-block; background: #e8f5e9; padding: 4px 8px; border-radius: 12px; font-size: 11px; margin: 2px; }
+        .member-badge.removable { cursor: pointer; }
+        .member-badge.removable:hover { background: #ffebee; }
         @media (max-width: 600px) {
             .form-row { grid-template-columns: 1fr; }
             .summary-grid { grid-template-columns: repeat(2, 1fr); }
@@ -90,7 +95,6 @@
     </div>
 
     <script>
-        // ===== INITIALIZATION =====
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js')
                 .catch(err => console.log('SW registration failed:', err));
@@ -125,25 +129,11 @@
         function changeCurrency() { state.currency = document.getElementById('currency').value; localStorage.setItem('currency', state.currency); render(); }
         function switchTab(tab) { state.activeTab = tab; state.selectedTripId = null; state.showPersonalForm = false; state.showTripForm = false; state.showLendingForm = false; render(); }
 
-        // ===== VALIDATION FUNCTIONS =====
-        function validateAmount(amt) {
-            const parsed = parseFloat(amt);
-            return !isNaN(parsed) && parsed > 0 ? parsed : null;
-        }
+        function validateAmount(amt) { const p = parseFloat(amt); return !isNaN(p) && p > 0 ? p : null; }
+        function validateText(t) { return t.trim().length > 0 ? t.trim() : null; }
+        function safeDiv(n, d) { return d > 0 ? n / d : 0; }
+        function roundTwoDecimals(n) { return isNaN(n) ? 0 : Math.round(n * 100) / 100; }
 
-        function validateText(text) {
-            return text.trim().length > 0 ? text.trim() : null;
-        }
-
-        function safeDiv(num, denom) {
-            return denom > 0 ? num / denom : 0;
-        }
-
-        function roundTwoDecimals(num) {
-            return isNaN(num) ? 0 : Math.round(num * 100) / 100;
-        }
-
-        // ===== RENDER FUNCTIONS =====
         function renderTabs() {
             const tabs = ['📊 Dashboard', '💳 Personal', '✈️ Trips', '💸 Lending', '👤 My Expenses'];
             const tabKeys = ['dashboard', 'personal', 'trips', 'lending', 'sandeep'];
@@ -155,31 +145,40 @@
         function render() {
             renderTabs();
             document.getElementById('month-selector').value = state.currentMonth;
-            
             let content = '';
             if (state.activeTab === 'dashboard') content = renderDashboard();
             else if (state.activeTab === 'personal') content = renderPersonalTab();
             else if (state.activeTab === 'trips') content = renderTripsTab();
             else if (state.activeTab === 'lending') content = renderLendingTab();
             else if (state.activeTab === 'sandeep') content = renderSandeepTab();
-            
             document.getElementById('main-content').innerHTML = content;
         }
 
         function renderDashboard() {
             const monthExpenses = getMonthExpenses();
-            let html = `<h2 class="section-title">📊 ${new Date(state.currentMonth + '-01').toLocaleDateString('en-US', {year: 'numeric', month: 'long'})}</h2>`;
+            const activeTrips = state.data.trips.filter(t => t.status === 'active').length;
+            const activeLending = state.data.lending.filter(l => !l.isSettled).length;
+            
+            let html = `<h2 class="section-title">📊 Dashboard - ${new Date(state.currentMonth + '-01').toLocaleDateString('en-US', {year: 'numeric', month: 'long'})}</h2>`;
             html += `<div class="summary-grid">
-                <div class="summary-card"><div class="summary-label">Total</div><div class="summary-amount">${getSymbol()}${roundTwoDecimals(monthExpenses.total).toFixed(2)}</div></div>
+                <div class="summary-card"><div class="summary-label">Total Spent</div><div class="summary-amount">${getSymbol()}${roundTwoDecimals(monthExpenses.total).toFixed(2)}</div></div>
                 <div class="summary-card secondary"><div class="summary-label">Personal</div><div class="summary-amount">${getSymbol()}${roundTwoDecimals(monthExpenses.personal).toFixed(2)}</div></div>
-                <div class="summary-card tertiary"><div class="summary-label">Trip Shares</div><div class="summary-amount">${getSymbol()}${roundTwoDecimals(monthExpenses.tripShares).toFixed(2)}</div></div>
+                <div class="summary-card tertiary"><div class="summary-label">Trips</div><div class="summary-amount">${getSymbol()}${roundTwoDecimals(monthExpenses.tripShares).toFixed(2)}</div></div>
                 <div class="summary-card quaternary"><div class="summary-label">Lending</div><div class="summary-amount">${getSymbol()}${roundTwoDecimals(Math.abs(monthExpenses.lendingBalance)).toFixed(2)}</div></div>
+            </div>`;
+
+            html += `<div class="card"><h3 class="section-title">🎯 Quick Stats</h3>
+                <div style="display: grid; gap: 10px;">
+                    <div><strong>Active Trips:</strong> ${activeTrips}</div>
+                    <div><strong>Pending Lending:</strong> ${activeLending}</div>
+                    <div><strong>Overall Balance:</strong> ${getSymbol()}${roundTwoDecimals(monthExpenses.balance).toFixed(2)}</div>
+                </div>
             </div>`;
 
             const settlements = getMonthSettlements();
             if (settlements.length > 0) {
-                html += `<div class="card"><h3 class="section-title">💸 Settlement (Trips)</h3>`;
-                settlements.forEach(s => html += `<div class="person-item"><div class="person-name">${s.from} → ${s.to}: ${getSymbol()}${roundTwoDecimals(s.amount).toFixed(2)}</div></div>`);
+                html += `<div class="card"><h3 class="section-title">💸 Pending Settlements (Trips)</h3>`;
+                settlements.forEach(s => html += `<div class="person-item"><div class="person-name">${s.from} → ${s.to}</div><div class="person-stat">${getSymbol()}${roundTwoDecimals(s.amount).toFixed(2)}</div></div>`);
                 html += `</div>`;
             }
 
@@ -188,7 +187,6 @@
 
         function renderPersonalTab() {
             let html = `<button class="btn btn-primary" onclick="togglePersonalForm()" style="width: 100%; margin-bottom: 12px;">➕ Add Expense</button>`;
-            
             if (state.showPersonalForm) {
                 const today = new Date().toISOString().split('T')[0];
                 html += `<div class="card">
@@ -197,25 +195,30 @@
                         <div class="form-group"><label class="label">Amount</label><input type="number" class="input" id="pers-amt" min="0" step="0.01" placeholder="0.00"></div>
                         <div class="form-group"><label class="label">Category</label><select class="input" id="pers-cat">${expenseCategories.map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>
                     </div>
-                    <div class="form-group"><label class="label">Date</label><input type="date" class="input" id="pers-date" value="${today}"></div>
+                    <div class="form-row">
+                        <div class="form-group"><label class="label">Date</label><input type="date" class="input" id="pers-date" value="${today}"></div>
+                        <div class="form-group"><label class="label">Receipt</label><input type="file" class="input" id="pers-receipt" accept="image/*"></div>
+                    </div>
+                    <div class="form-group"><label class="label">Comments</label><textarea class="input" id="pers-comment" placeholder="Add any notes..."></textarea></div>
                     <button class="btn btn-success" onclick="addPersonal()" style="width: 100%;">✓ Add</button>
                 </div>`;
             }
-
             const monthPersonal = state.data.personal.filter(e => e.date && e.date.slice(0, 7) === state.currentMonth);
             html += `<div class="card"><h3 class="section-title">📋 Expenses (${monthPersonal.length})</h3>`;
-            html += monthPersonal.length === 0 ? '<div class="empty">No expenses</div>' : monthPersonal.map(e => 
-                `<div class="item"><div class="item-header"><span>${e.description || 'Unnamed'}</span><span>${getSymbol()}${roundTwoDecimals(e.amount).toFixed(2)}</span></div>
-                <div class="item-meta">🏷️ ${e.category || 'Other'} | 📅 ${e.date ? new Date(e.date).toLocaleDateString() : 'No date'}</div>
-                <button class="btn btn-danger" onclick="deletePersonal(${e.id})">Delete</button></div>`
-            ).join('');
+            html += monthPersonal.length === 0 ? '<div class="empty">No expenses</div>' : monthPersonal.map(e => {
+                let itemHtml = `<div class="item"><div class="item-header"><span>${e.description || 'Unnamed'}</span><span>${getSymbol()}${roundTwoDecimals(e.amount).toFixed(2)}</span></div>
+                    <div class="item-meta">🏷️ ${e.category || 'Other'} | 📅 ${e.date ? new Date(e.date).toLocaleDateString() : 'No date'}</div>`;
+                if (e.receipt) itemHtml += `<div class="receipt-indicator">📷 Receipt attached</div>`;
+                if (e.comment) itemHtml += `<div class="comment-box">💬 ${e.comment}</div>`;
+                itemHtml += `<div><button class="btn btn-warning btn-small" onclick="sharePersonalExpense(${e.id})">📱 Share</button><button class="btn btn-danger btn-small" onclick="deletePersonal(${e.id})">Delete</button></div></div>`;
+                return itemHtml;
+            }).join('');
             html += `</div>`;
             return html;
         }
 
         function renderTripsTab() {
             let html = `<button class="btn btn-secondary" onclick="toggleCreateTripForm()" style="width: 100%; margin-bottom: 12px;">➕ Create Trip</button>`;
-            
             if (state.showTripForm) {
                 const today = new Date().toISOString().split('T')[0];
                 html += `<div class="card">
@@ -227,15 +230,15 @@
                     <button class="btn btn-success" onclick="createTrip()" style="width: 100%;">✓ Create</button>
                 </div>`;
             }
-
             const active = state.data.trips.filter(t => t.status === 'active');
             html += `<div class="card"><h3 class="section-title">🟢 Active Trips (${active.length})</h3>`;
             html += active.length === 0 ? '<div class="empty">No active trips</div>' : active.map(t => {
                 const tripTotal = t.expenses ? t.expenses.reduce((s,e)=>s + (e.amount || 0),0) : 0;
                 return `<div class="item"><div class="item-header"><span>${t.name || 'Unnamed'}</span><span>${getSymbol()}${roundTwoDecimals(tripTotal).toFixed(2)}</span></div>
                 <div class="item-meta">👥 ${t.members ? t.members.length : 0} | 💰 ${t.expenses ? t.expenses.length : 0} expenses</div>
-                <button class="btn btn-primary" onclick="selectTrip(${t.id})">View</button>
-                <button class="btn btn-danger" onclick="endTrip(${t.id})">End</button></div>`
+                <div><button class="btn btn-primary" onclick="selectTrip(${t.id})">View</button>
+                <button class="btn btn-warning" onclick="shareTrip(${t.id})">📱 Share</button>
+                <button class="btn btn-danger" onclick="deleteTrip(${t.id})">Delete</button></div></div>`
             }).join('');
             html += `</div>`;
             return html;
@@ -243,7 +246,6 @@
 
         function renderLendingTab() {
             let html = `<button class="btn btn-primary" onclick="toggleLendingForm()" style="width: 100%; margin-bottom: 12px;">➕ Add Lending</button>`;
-            
             if (state.showLendingForm) {
                 const today = new Date().toISOString().split('T')[0];
                 const dueDate = new Date(Date.now() + 7*24*60*60*1000).toISOString().split('T')[0];
@@ -260,14 +262,14 @@
                     <button class="btn btn-success" onclick="addLending()" style="width: 100%;">✓ Add</button>
                 </div>`;
             }
-
             const pending = state.data.lending.filter(l => !l.isSettled);
             html += `<div class="card"><h3 class="section-title">💸 Pending (${pending.length})</h3>`;
             html += pending.length === 0 ? '<div class="empty">No pending</div>' : pending.map(l => 
                 `<div class="item"><div class="item-header"><span>${l.personName || 'Unknown'}</span><span>${getSymbol()}${roundTwoDecimals(l.amount).toFixed(2)}</span></div>
                 <div class="item-meta">${l.type === 'lent' ? '💰 Lent' : '💳 Owed'} | Due: ${l.dueDate ? new Date(l.dueDate).toLocaleDateString() : 'No date'}</div>
-                <button class="btn btn-success" onclick="settleLending(${l.id})">Settle</button>
-                <button class="btn btn-danger" onclick="deleteLending(${l.id})">Delete</button></div>`
+                <div><button class="btn btn-success" onclick="settleLending(${l.id})">Settle</button>
+                <button class="btn btn-warning" onclick="shareLending(${l.id})">📱 Share</button>
+                <button class="btn btn-danger" onclick="deleteLending(${l.id})">Delete</button></div></div>`
             ).join('');
             html += `</div>`;
             return html;
@@ -283,7 +285,6 @@
                 const sandeepPaid = t.expenses ? t.expenses.filter(e => e.paidBy === OWNER).reduce((s,e)=>s + (e.amount || 0),0) : 0;
                 totalPaid += sandeepPaid;
             });
-
             let html = `<div class="summary-grid">
                 <div class="summary-card"><div class="summary-label">Total Spent</div><div class="summary-amount">${getSymbol()}${roundTwoDecimals(totalPaid).toFixed(2)}</div></div>
                 <div class="summary-card secondary"><div class="summary-label">Overall Balance</div><div class="summary-amount">${getSymbol()}${roundTwoDecimals(totalPaid - totalOwes).toFixed(2)}</div></div>
@@ -291,7 +292,6 @@
             return html;
         }
 
-        // ===== CALCULATION FUNCTIONS =====
         function getMonthExpenses() {
             let personal = 0, tripShares = 0, lent = 0, owed = 0;
             state.data.personal.filter(e => e.date && e.date.slice(0, 7) === state.currentMonth).forEach(e => personal += e.amount || 0);
@@ -303,7 +303,8 @@
                 if (l.type === 'lent') lent += l.amount || 0;
                 else owed += l.amount || 0;
             });
-            return { personal, tripShares, lendingBalance: owed - lent, total: personal + tripShares + owed };
+            const total = personal + tripShares + owed;
+            return { personal, tripShares, lendingBalance: owed - lent, total, balance: total - tripShares };
         }
 
         function getMonthSettlements() {
@@ -333,7 +334,6 @@
             return settlements;
         }
 
-        // ===== ACTION FUNCTIONS =====
         function togglePersonalForm() { state.showPersonalForm = !state.showPersonalForm; render(); }
         function toggleCreateTripForm() { state.showTripForm = !state.showTripForm; render(); }
         function toggleLendingForm() { state.showLendingForm = !state.showLendingForm; render(); }
@@ -343,16 +343,25 @@
             const amt = validateAmount(document.getElementById('pers-amt').value);
             const cat = document.getElementById('pers-cat').value;
             const date = document.getElementById('pers-date').value;
+            const comment = document.getElementById('pers-comment').value.trim();
+            const receiptFile = document.getElementById('pers-receipt').files[0];
             
-            if (!desc || !amt || !date) {
-                alert('Please fill all fields with valid values');
-                return;
+            if (!desc || !amt || !date) { alert('Please fill required fields'); return; }
+            
+            const reader = new FileReader();
+            const processData = (receipt) => {
+                state.data.personal.push({id: Date.now(), description: desc, amount: roundTwoDecimals(amt), category: cat, date, comment, receipt});
+                saveData();
+                state.showPersonalForm = false;
+                render();
+            };
+            
+            if (receiptFile) {
+                reader.onload = (e) => processData(e.target.result);
+                reader.readAsDataURL(receiptFile);
+            } else {
+                processData(null);
             }
-            
-            state.data.personal.push({id: Date.now(), description: desc, amount: roundTwoDecimals(amt), category: cat, date});
-            saveData();
-            state.showPersonalForm = false;
-            render();
         }
 
         function deletePersonal(id) {
@@ -363,17 +372,19 @@
             }
         }
 
+        function sharePersonalExpense(id) {
+            const exp = state.data.personal.find(e => e.id === id);
+            if (!exp) return;
+            const msg = `📊 Personal Expense\n${exp.description}\n${getSymbol()}${roundTwoDecimals(exp.amount).toFixed(2)}\n📅 ${new Date(exp.date).toLocaleDateString()}\n🏷️ ${exp.category}${exp.comment ? '\n💬 ' + exp.comment : ''}`;
+            window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+        }
+
         function createTrip() {
             const name = validateText(document.getElementById('trip-name').value);
             const date = document.getElementById('trip-date').value;
             const memberText = document.getElementById('trip-members').value;
             const members = [OWNER, ...memberText.split(',').map(m => validateText(m)).filter(m => m && m !== OWNER)];
-            
-            if (!name || !date || members.length < 2) {
-                alert('Please enter trip name, date, and at least one other member');
-                return;
-            }
-            
+            if (!name || !date || members.length < 2) { alert('Please enter trip name, date, and at least one other member'); return; }
             state.data.trips.push({id: Date.now(), name, date, members, expenses: [], status: 'active'});
             saveData();
             state.showTripForm = false;
@@ -384,29 +395,36 @@
             state.selectedTripId = id;
             const trip = state.data.trips.find(t => t.id === id);
             if (!trip) return;
-            
             const total = trip.expenses ? trip.expenses.reduce((s,e)=>s + (e.amount || 0),0) : 0;
             const perPerson = safeDiv(total, trip.members ? trip.members.length : 1);
             
-            let html = `<button class="btn btn-secondary" onclick="switchTab('trips')" style="margin-bottom: 12px;">← Back</button>`;
-            html += `<h2 class="section-title">${trip.name || 'Unnamed'}</h2>`;
-            html += `<div class="summary-grid">
+            let html = `<button class="btn btn-secondary" onclick="switchTab('trips')">← Back</button><h2 class="section-title">${trip.name || 'Unnamed'}</h2>
+            <div class="summary-grid">
                 <div class="summary-card"><div class="summary-label">Total</div><div class="summary-amount">${getSymbol()}${roundTwoDecimals(total).toFixed(2)}</div></div>
                 <div class="summary-card secondary"><div class="summary-label">Per Person</div><div class="summary-amount">${getSymbol()}${roundTwoDecimals(perPerson).toFixed(2)}</div></div>
                 <div class="summary-card tertiary"><div class="summary-label">Expenses</div><div class="summary-amount">${trip.expenses ? trip.expenses.length : 0}</div></div>
             </div>`;
             
-            html += `<button class="btn btn-primary" id="add-exp-btn" onclick="toggleTripExpenseForm()" style="width: 100%; margin-bottom: 12px;">➕ Add Expense</button>`;
+            html += `<div class="card"><h3 class="section-title">👥 Members</h3>
+                <div>${trip.members.map(m => `<span class="member-badge">${m}${m !== OWNER ? '<span class="member-remove" onclick="removeMember(\\'' + m + '\\')" style="cursor:pointer; margin-left:4px;">✕</span>' : ''}</span>`).join('')}</div>
+                <button class="btn btn-warning" onclick="toggleAddMember()" style="margin-top: 8px;">➕ Add Member</button>
+                <div id="add-member-form" style="margin-top: 8px; display:none;">
+                    <input type="text" class="input" id="new-member" placeholder="New member name" style="width: 60%; margin-right: 8px;">
+                    <button class="btn btn-success" onclick="addMemberToTrip()">Add</button>
+                </div>
+            </div>`;
             
-            html += `<div id="trip-exp-form"></div>`;
-            
-            html += `<div class="card"><h3 class="section-title">💰 Expenses</h3>`;
-            html += (!trip.expenses || trip.expenses.length === 0) ? '<div class="empty">No expenses</div>' : trip.expenses.map(e => 
-                `<div class="item"><div class="item-header"><span>${e.description || 'Unnamed'}</span><span>${getSymbol()}${roundTwoDecimals(e.amount).toFixed(2)}</span></div>
-                <div class="item-meta">👤 ${e.paidBy || 'Unknown'} | 📅 ${e.date ? new Date(e.date).toLocaleDateString() : 'No date'}</div>
-                <button class="btn btn-danger" onclick="deleteTripExpense(${id}, ${e.id})">Delete</button></div>`
-            ).join('');
-            html += `</div>`;
+            html += `<button class="btn btn-primary" onclick="toggleTripExpenseForm()" style="width: 100%; margin: 12px 0;">➕ Add Expense</button>
+            <div id="trip-exp-form"></div>
+            <div class="card"><h3 class="section-title">💰 Expenses</h3>` + 
+            ((!trip.expenses || trip.expenses.length === 0) ? '<div class="empty">No expenses</div>' : trip.expenses.map(e => {
+                let eHtml = `<div class="item"><div class="item-header"><span>${e.description || 'Unnamed'}</span><span>${getSymbol()}${roundTwoDecimals(e.amount).toFixed(2)}</span></div>
+                <div class="item-meta">👤 ${e.paidBy || 'Unknown'} | 📅 ${e.date ? new Date(e.date).toLocaleDateString() : 'No date'}</div>`;
+                if (e.receipt) eHtml += `<div class="receipt-indicator">📷 Receipt attached</div>`;
+                if (e.comment) eHtml += `<div class="comment-box">💬 ${e.comment}</div>`;
+                eHtml += `<div><button class="btn btn-danger btn-small" onclick="deleteTripExpense(${id}, ${e.id})">Delete</button></div></div>`;
+                return eHtml;
+            }).join('')) + `</div>`;
 
             const balances = {};
             (trip.members || []).forEach(m => balances[m] = 0);
@@ -421,18 +439,37 @@
                     <div class="person-stat">Paid: ${getSymbol()}${roundTwoDecimals(paid).toFixed(2)} | Owes: ${getSymbol()}${roundTwoDecimals(owes).toFixed(2)}</div>
                     <div class="balance ${balance > 0 ? 'balance-negative' : 'balance-positive'}">${balance > 0 ? '✓ Receive: ' : '✗ Pay: '}${getSymbol()}${roundTwoDecimals(Math.abs(balance)).toFixed(2)}</div></div>`;
             });
-            html += `</div>`;
-            html += `<button class="btn btn-success" onclick="endTrip(${id})" style="margin-top: 12px;">End Trip</button>`;
+            html += `</div><button class="btn btn-warning" onclick="shareTrip(${id})" style="margin-top: 12px;">📱 Share Summary</button>
+            <button class="btn btn-success" onclick="endTrip(${id})">End Trip</button>`;
             
             document.getElementById('main-content').innerHTML = html;
+        }
+
+        function toggleAddMember() {
+            const form = document.getElementById('add-member-form');
+            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function addMemberToTrip() {
+            const trip = state.data.trips.find(t => t.id === state.selectedTripId);
+            const name = validateText(document.getElementById('new-member').value);
+            if (!name || trip.members.includes(name)) { alert('Invalid or duplicate member'); return; }
+            trip.members.push(name);
+            saveData();
+            selectTrip(state.selectedTripId);
+        }
+
+        function removeMember(name) {
+            const trip = state.data.trips.find(t => t.id === state.selectedTripId);
+            trip.members = trip.members.filter(m => m !== name);
+            saveData();
+            selectTrip(state.selectedTripId);
         }
 
         function toggleTripExpenseForm() {
             const container = document.getElementById('trip-exp-form');
             if (!container) return;
-            if (container.innerHTML) {
-                container.innerHTML = '';
-            } else {
+            if (container.innerHTML) { container.innerHTML = ''; } else {
                 const trip = state.data.trips.find(t => t.id === state.selectedTripId);
                 if (!trip) return;
                 const today = new Date().toISOString().split('T')[0];
@@ -442,7 +479,11 @@
                         <div class="form-group"><label class="label">Amount</label><input type="number" class="input" id="texp-amt" min="0" step="0.01" placeholder="0.00"></div>
                         <div class="form-group"><label class="label">Who Paid</label><select class="input" id="texp-paid">${trip.members.map(m => `<option value="${m}">${m}${m === OWNER ? ' (You)' : ''}</option>`).join('')}</select></div>
                     </div>
-                    <div class="form-group"><label class="label">Date</label><input type="date" class="input" id="texp-date" value="${today}"></div>
+                    <div class="form-row">
+                        <div class="form-group"><label class="label">Date</label><input type="date" class="input" id="texp-date" value="${today}"></div>
+                        <div class="form-group"><label class="label">Receipt</label><input type="file" class="input" id="texp-receipt" accept="image/*"></div>
+                    </div>
+                    <div class="form-group"><label class="label">Comments</label><textarea class="input" id="texp-comment" placeholder="Add any notes..."></textarea></div>
                     <button class="btn btn-success" onclick="addTripExpense()" style="width: 100%;">✓ Add</button>
                 </div>`;
             }
@@ -453,17 +494,26 @@
             const amt = validateAmount(document.getElementById('texp-amt').value);
             const paid = document.getElementById('texp-paid').value;
             const date = document.getElementById('texp-date').value;
+            const comment = document.getElementById('texp-comment').value.trim();
+            const receiptFile = document.getElementById('texp-receipt').files[0];
             
-            if (!desc || !amt || !paid || !date) {
-                alert('Please fill all fields with valid values');
-                return;
-            }
+            if (!desc || !amt || !paid || !date) { alert('Please fill required fields'); return; }
             
-            const trip = state.data.trips.find(t => t.id === state.selectedTripId);
-            if (trip) {
-                trip.expenses.push({id: Date.now(), description: desc, amount: roundTwoDecimals(amt), paidBy: paid, date});
-                saveData();
-                selectTrip(state.selectedTripId);
+            const reader = new FileReader();
+            const processData = (receipt) => {
+                const trip = state.data.trips.find(t => t.id === state.selectedTripId);
+                if (trip) {
+                    trip.expenses.push({id: Date.now(), description: desc, amount: roundTwoDecimals(amt), paidBy: paid, date, comment, receipt});
+                    saveData();
+                    selectTrip(state.selectedTripId);
+                }
+            };
+            
+            if (receiptFile) {
+                reader.onload = (e) => processData(e.target.result);
+                reader.readAsDataURL(receiptFile);
+            } else {
+                processData(null);
             }
         }
 
@@ -478,14 +528,26 @@
             }
         }
 
+        function deleteTrip(id) {
+            if (confirm('Delete this trip? This cannot be undone.')) {
+                state.data.trips = state.data.trips.filter(t => t.id !== id);
+                saveData();
+                switchTab('trips');
+            }
+        }
+
+        function shareTrip(id) {
+            const trip = state.data.trips.find(t => t.id === id);
+            const total = trip.expenses ? trip.expenses.reduce((s,e)=>s + (e.amount || 0),0) : 0;
+            const perPerson = safeDiv(total, trip.members ? trip.members.length : 1);
+            let msg = `🎉 TRIP: ${trip.name}\n💰 Total: ${getSymbol()}${roundTwoDecimals(total).toFixed(2)}\nPer Person: ${getSymbol()}${roundTwoDecimals(perPerson).toFixed(2)}\n\n👥 Members:\n${trip.members.join(', ')}`;
+            window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+        }
+
         function endTrip(id) {
             if (confirm('End this trip?')) {
                 const trip = state.data.trips.find(t => t.id === id);
-                if (trip) {
-                    trip.status = 'completed';
-                    saveData();
-                    switchTab('trips');
-                }
+                if (trip) { trip.status = 'completed'; saveData(); switchTab('trips'); }
             }
         }
 
@@ -496,15 +558,8 @@
             const date = document.getElementById('lend-date').value;
             const due = document.getElementById('lend-due').value;
             
-            if (!person || !amt || !date || !due) {
-                alert('Please fill all fields with valid values');
-                return;
-            }
-            
-            if (new Date(due) < new Date(date)) {
-                alert('Due date must be after given date');
-                return;
-            }
+            if (!person || !amt || !date || !due) { alert('Please fill all fields'); return; }
+            if (new Date(due) < new Date(date)) { alert('Due date must be after given date'); return; }
             
             state.data.lending.push({id: Date.now(), personName: person, amount: roundTwoDecimals(amt), type, givenDate: date, dueDate: due, isSettled: false});
             saveData();
@@ -515,13 +570,14 @@
         function settleLending(id) {
             if (confirm('Mark as settled?')) {
                 const lending = state.data.lending.find(l => l.id === id);
-                if (lending) {
-                    lending.isSettled = true;
-                    lending.settledDate = new Date().toISOString();
-                    saveData();
-                    render();
-                }
+                if (lending) { lending.isSettled = true; lending.settledDate = new Date().toISOString(); saveData(); render(); }
             }
+        }
+
+        function shareLending(id) {
+            const lend = state.data.lending.find(l => l.id === id);
+            const msg = `💰 ${lend.type === 'lent' ? 'Lent to' : 'Owe'} ${lend.personName}\n${getSymbol()}${roundTwoDecimals(lend.amount).toFixed(2)}\n📅 Due: ${new Date(lend.dueDate).toLocaleDateString()}`;
+            window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
         function deleteLending(id) {
@@ -532,7 +588,6 @@
             }
         }
 
-        // Initialize
         document.getElementById('currency').value = state.currency;
         document.getElementById('month-selector').value = state.currentMonth;
         render();
