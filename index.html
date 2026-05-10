@@ -92,8 +92,7 @@
     <script>
         // ===== INITIALIZATION =====
         if ('serviceWorker' in navigator) {
-            const basePath = window.location.pathname.includes('/expns/') ? '/expns/sw.js' : '/sw.js';
-            navigator.serviceWorker.register(basePath, { scope: window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1) })
+            navigator.serviceWorker.register('sw.js')
                 .catch(err => console.log('SW registration failed:', err));
         }
 

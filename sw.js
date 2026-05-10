@@ -1,10 +1,9 @@
 const CACHE_NAME = 'expense-manager-v1';
-const BASE_PATH = '/expns';
 const urlsToCache = [
-  `${BASE_PATH}/`,
-  `${BASE_PATH}/index.html`,
-  `${BASE_PATH}/manifest.json`,
-  `${BASE_PATH}/sw.js`
+  './',
+  './index.html',
+  './manifest.json',
+  './sw.js'
 ];
 
 // Install event

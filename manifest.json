@@ -2,7 +2,7 @@
   "name": "Complete Expense Manager",
   "short_name": "Expense Manager",
   "description": "Complete financial tracking app - personal expenses, trip splitting, lending tracker",
-  "start_url": "/expns/",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#667eea",
