@@ -11,11 +11,12 @@
         body { font-family: "Segoe UI", Tahoma, sans-serif; background: #f8f9fa; color: #333; }
         .app { min-height: 100vh; background: #f8f9fa; }
         .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; }
-        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
         .title { display: flex; align-items: center; gap: 12px; }
         .icon { font-size: 32px; }
         .title-text h1 { font-size: 24px; margin: 0; }
         .title-text p { font-size: 11px; opacity: 0.9; margin: 0; }
+        .header-info { font-size: 12px; background: rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 6px; }
         select { padding: 8px 12px; border: none; border-radius: 6px; background: rgba(255,255,255,0.2); color: white; font-weight: 600; cursor: pointer; }
         .tabs { display: flex; gap: 0; border-bottom: 2px solid rgba(255,255,255,0.3); flex-wrap: wrap; }
         .tab { padding: 10px 15px; background: none; border: none; color: white; cursor: pointer; font-weight: 600; font-size: 13px; border-bottom: 3px solid transparent; }
@@ -49,6 +50,7 @@
         .settlement { background: #f0f7ff; padding: 10px; border-radius: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; font-size: 12px; }
         .settlement-amount { font-weight: 700; color: #4ECDC4; }
         .member-chip { background: white; padding: 6px 12px; border-radius: 20px; border: 1px solid #ddd; font-size: 12px; display: inline-flex; align-items: center; gap: 6px; margin-right: 6px; margin-bottom: 6px; }
+        .member-chip.default { background: #667eea; color: white; border-color: #667eea; font-weight: 600; }
         .member-remove { cursor: pointer; color: #FF6B6B; font-weight: 700; }
         .empty { text-align: center; padding: 30px 20px; color: #999; }
         .trip-item { background: #f9f9f9; padding: 12px; border-radius: 8px; margin-bottom: 10px; }
@@ -57,12 +59,13 @@
         .whatsapp-btn { background: #25D366; color: white; padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 12px; }
         .whatsapp-btn:hover { background: #20ba5a; }
         .section-title { font-size: 16px; font-weight: 700; margin-bottom: 12px; }
-        .person-settlement { background: #f0f7ff; padding: 10px; border-radius: 6px; margin-bottom: 8px; }
+        .person-settlement { background: #f0f7ff; padding: 10px; border-radius: 6px; margin-bottom: 8px; border-left: 4px solid #667eea; }
+        .person-settlement.default { background: #e8f5e9; border-left-color: #4CAF50; }
         .person-name { font-weight: 700; margin-bottom: 4px; }
         .person-stat { font-size: 12px; color: #999; margin-bottom: 4px; }
         .balance { padding: 6px; border-radius: 4px; margin-top: 6px; font-size: 12px; font-weight: 700; }
-        .balance-positive { background: #d4edda; color: #155724; }
-        .balance-negative { background: #f8d7da; color: #721c24; }
+        .balance-positive { background: #f8d7da; color: #721c24; }
+        .balance-negative { background: #d4edda; color: #155724; }
         @media (max-width: 600px) {
             .form-row { grid-template-columns: 1fr; }
             .summary-grid { grid-template-columns: repeat(2, 1fr); }
@@ -80,22 +83,25 @@
                         <p>Dynamic Expense Management</p>
                     </div>
                 </div>
-                <select id="currency" onchange="changeCurrency()">
-                    <option value="INR">INR</option>
-                    <option value="USD">USD</option>
-                    <option value="EUR">EUR</option>
-                    <option value="GBP">GBP</option>
-                </select>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <div class="header-info">👤 Sandeep</div>
+                    <select id="currency" onchange="changeCurrency()">
+                        <option value="INR">INR</option>
+                        <option value="USD">USD</option>
+                        <option value="EUR">EUR</option>
+                        <option value="GBP">GBP</option>
+                    </select>
+                </div>
             </div>
             <div class="tabs">
                 <button class="tab active" onclick="switchTab('active')">🟢 Active</button>
                 <button class="tab" onclick="switchTab('detail')">📊 Details</button>
                 <button class="tab" onclick="switchTab('completed')">✅ Completed</button>
+                <button class="tab" onclick="switchTab('sandeep')">👤 My Expenses</button>
             </div>
         </div>
 
         <div class="main">
-            <!-- Active Trips Tab -->
             <div id="active-tab" class="content show">
                 <button class="btn btn-secondary" onclick="toggleCreateTrip()" style="width: 100%; margin-bottom: 16px;">
                     <span id="create-btn-text">➕ Create New Trip</span>
@@ -118,9 +124,9 @@
                             </div>
                         </div>
                         <div class="form-group">
-                            <label class="label">👥 Add Members</label>
+                            <label class="label">👥 Members (In addition to Sandeep)</label>
                             <div style="display: flex; gap: 6px;">
-                                <input type="text" class="input" id="member-input" placeholder="Member name" style="flex: 1;">
+                                <input type="text" class="input" id="member-input" placeholder="Add other members" style="flex: 1;">
                                 <button class="btn btn-primary btn-small" onclick="addMember()">Add</button>
                             </div>
                             <div id="members-list" style="margin-top: 8px;"></div>
@@ -132,35 +138,36 @@
                 <div id="trips-list"></div>
             </div>
 
-            <!-- Trip Detail Tab -->
             <div id="detail-tab" class="content">
                 <div id="trip-detail-content"></div>
             </div>
 
-            <!-- Completed Tab -->
             <div id="completed-tab" class="content">
                 <div id="completed-list"></div>
+            </div>
+
+            <div id="sandeep-tab" class="content">
+                <div id="sandeep-content"></div>
             </div>
         </div>
     </div>
 
     <script>
-        let trips = JSON.parse(localStorage.getItem('trips_v2')) || [];
+        let trips = JSON.parse(localStorage.getItem('trips_v3')) || [];
         let tempMembers = [];
         let selectedTripId = null;
         let currency = localStorage.getItem('currency') || 'INR';
+        const OWNER = 'Sandeep';
 
         const symbols = { INR: '₹', USD: '$', EUR: '€', GBP: '£' };
         const categories = ['Food', 'Accommodation', 'Transport', 'Activities', 'Shopping', 'Other'];
 
         function getSymbol() { return symbols[currency] || currency; }
-
-        function saveTripData() { localStorage.setItem('trips_v2', JSON.stringify(trips)); }
+        function saveTripData() { localStorage.setItem('trips_v3', JSON.stringify(trips)); }
 
         function changeCurrency() {
             currency = document.getElementById('currency').value;
             localStorage.setItem('currency', currency);
-            document.getElementById('currency').value = currency;
             renderAll();
         }
 
@@ -176,10 +183,14 @@
                 document.getElementById('detail-tab').classList.add('show');
                 document.querySelectorAll('.tab')[1].classList.add('active');
                 renderTripDetail();
-            } else {
+            } else if (tab === 'completed') {
                 document.getElementById('completed-tab').classList.add('show');
                 document.querySelectorAll('.tab')[2].classList.add('active');
                 renderCompletedTrips();
+            } else if (tab === 'sandeep') {
+                document.getElementById('sandeep-tab').classList.add('show');
+                document.querySelectorAll('.tab')[3].classList.add('active');
+                renderSandeepExpenses();
             }
         }
 
@@ -195,6 +206,7 @@
                 form.style.display = 'none';
                 btn.textContent = '➕ Create New Trip';
                 tempMembers = [];
+                renderMembers();
             }
         }
 
@@ -206,7 +218,7 @@
         function addMember() {
             const input = document.getElementById('member-input');
             const name = input.value.trim();
-            if (name && !tempMembers.includes(name)) {
+            if (name && name !== OWNER && !tempMembers.includes(name)) {
                 tempMembers.push(name);
                 input.value = '';
                 renderMembers();
@@ -220,8 +232,11 @@
 
         function renderMembers() {
             const list = document.getElementById('members-list');
-            list.innerHTML = tempMembers.map((m, i) => 
-                `<div class="member-chip">${m}<span class="member-remove" onclick="removeMember(${i})">✕</span></div>`
+            const members = [OWNER, ...tempMembers];
+            list.innerHTML = members.map((m, i) => 
+                m === OWNER 
+                    ? `<div class="member-chip default">${m} (You)</div>`
+                    : `<div class="member-chip">${m}<span class="member-remove" onclick="removeMember(${i-1})">✕</span></div>`
             ).join('');
         }
 
@@ -230,15 +245,15 @@
             const date = document.getElementById('trip-date').value;
             const desc = document.getElementById('trip-desc').value.trim();
 
-            if (!name || tempMembers.length === 0) {
-                alert('Please enter trip name and add members');
+            if (!name) {
+                alert('Please enter trip name');
                 return;
             }
 
             const newTrip = {
                 id: Date.now(),
                 name, date, desc,
-                members: [...tempMembers],
+                members: [OWNER, ...tempMembers],
                 expenses: [],
                 status: 'active',
                 createdAt: new Date().toISOString()
@@ -264,13 +279,13 @@
                 : active.map(t => `
                     <div class="card">
                         <div style="display: flex; justify-content: space-between;">
-                            <div>
+                            <div style="flex: 1;">
                                 <div class="trip-name">${t.name}</div>
                                 <div class="trip-meta">📅 ${new Date(t.date).toLocaleDateString()} | 👥 ${t.members.length} | 💰 ${t.expenses.length} expenses</div>
                             </div>
                             <div>
                                 <button class="btn btn-primary btn-small" onclick="selectTrip(${t.id})">View</button>
-                                <button class="btn btn-danger btn-small" onclick="endTrip(${t.id})">End</button>
+                                <button class="btn btn-danger btn-small" onclick="endTrip(${t.id})" style="margin-top: 4px;">End</button>
                             </div>
                         </div>
                     </div>
@@ -300,7 +315,7 @@
                 </div>
 
                 <button class="btn btn-secondary" onclick="toggleAddExpense()" style="width: 100%; margin-bottom: 12px;">
-                    <span id="exp-btn">${selectedTripId ? '➕ Add Expense' : ''}</span>
+                    <span id="exp-btn">➕ Add Expense</span>
                 </button>
 
                 <div id="expense-form-container"></div>
@@ -316,7 +331,7 @@
                             <div class="expense-meta">👤 ${e.paidBy} | 🏷️ ${e.category} | 📅 ${new Date(e.date).toLocaleDateString()}</div>
                             ${e.notes ? `<div style="font-size: 11px; color: #667eea; margin: 4px 0;">📝 ${e.notes}</div>` : ''}
                             ${e.image ? `<div style="font-size: 11px; color: #4ECDC4;">📷 Receipt attached</div>` : ''}
-                            <button class="btn btn-danger btn-small" onclick="deleteExpense(${trip.id}, ${e.id})">Delete</button>
+                            <button class="btn btn-danger btn-small" onclick="deleteExpense(${trip.id}, ${e.id})" style="margin-top: 6px;">Delete</button>
                         </div>
                     `).join('')}</div>
                 </div>
@@ -367,7 +382,7 @@
                             <label class="label">Who Paid?</label>
                             <select class="input" id="exp-paidby">
                                 <option value="">Select person</option>
-                                ${trip.members.map(m => `<option value="${m}">${m}</option>`).join('')}
+                                ${trip.members.map(m => `<option value="${m}">${m}${m === OWNER ? ' (You)' : ''}</option>`).join('')}
                             </select>
                         </div>
                     </div>
@@ -439,14 +454,20 @@
 
             trip.expenses.forEach(e => {
                 balances[e.paidBy] += e.amount;
-                trip.members.forEach(m => {
-                    if (m !== e.paidBy) balances[m] -= perPerson;
-                });
-                balances[e.paidBy] -= perPerson;
+            });
+
+            const owes = {};
+            trip.members.forEach(m => {
+                owes[m] = perPerson;
+            });
+
+            const netBalance = {};
+            trip.members.forEach(m => {
+                netBalance[m] = balances[m] - owes[m];
             });
 
             const settlement = [];
-            const temp = { ...balances };
+            const temp = { ...netBalance };
 
             Object.entries(temp).forEach(([person, balance]) => {
                 if (balance < -0.01) {
@@ -463,21 +484,24 @@
 
             let html = `
                 <div style="margin-bottom: 12px;">
-                    <div style="margin-bottom: 8px;"><strong>Total:</strong> ${getSymbol()}${total.toFixed(2)} | <strong>Per Person:</strong> ${getSymbol()}${perPerson.toFixed(2)}</div>
+                    <div style="margin-bottom: 8px;"><strong>Total:</strong> ${getSymbol()}${total.toFixed(2)} | <strong>Per Person Owes:</strong> ${getSymbol()}${perPerson.toFixed(2)}</div>
                 </div>
             `;
 
             html += '<h4 style="margin-bottom: 8px; font-size: 13px;">Member Balances:</h4>';
             trip.members.forEach(m => {
-                const paidAmount = trip.expenses.filter(e => e.paidBy === m).reduce((sum, e) => sum + e.amount, 0);
-                const balance = balances[m];
+                const paidAmount = balances[m];
+                const owesAmount = owes[m];
+                const balance = netBalance[m];
+                const isDefault = m === OWNER;
+                
                 html += `
-                    <div class="person-settlement">
-                        <div class="person-name">${m}</div>
+                    <div class="person-settlement ${isDefault ? 'default' : ''}">
+                        <div class="person-name">${m}${isDefault ? ' (You)' : ''}</div>
                         <div class="person-stat">💰 Paid: ${getSymbol()}${paidAmount.toFixed(2)}</div>
-                        <div class="person-stat">💳 Owes: ${getSymbol()}${perPerson.toFixed(2)}</div>
-                        <div class="balance ${balance > 0 ? 'balance-positive' : 'balance-negative'}">
-                            ${balance > 0 ? '✓ Receives: ' + getSymbol() + Math.abs(balance).toFixed(2) : '✗ Pays: ' + getSymbol() + Math.abs(balance).toFixed(2)}
+                        <div class="person-stat">💳 Owes (Share): ${getSymbol()}${owesAmount.toFixed(2)}</div>
+                        <div class="balance ${balance < 0 ? 'balance-negative' : 'balance-positive'}">
+                            ${balance < 0 ? '✓ Should Receive: ' + getSymbol() + Math.abs(balance).toFixed(2) : '✗ Should Pay: ' + getSymbol() + Math.abs(balance).toFixed(2)}
                         </div>
                     </div>
                 `;
@@ -501,7 +525,7 @@
             let message = `🎉 TRIP SUMMARY: ${trip.name}\n`;
             message += `━━━━━━━━━━━━━━━━━━━━━\n\n`;
             message += `💰 TOTAL: ${getSymbol()}${total.toFixed(2)}\n`;
-            message += `Per Person: ${getSymbol()}${perPerson.toFixed(2)}\n\n`;
+            message += `Per Person Owes: ${getSymbol()}${perPerson.toFixed(2)}\n\n`;
 
             message += `💵 WHO PAID:\n`;
             const paidBy = {};
@@ -532,7 +556,7 @@
                     return `
                         <div class="card">
                             <div style="display: flex; justify-content: space-between;">
-                                <div>
+                                <div style="flex: 1;">
                                     <div class="trip-name">${t.name}</div>
                                     <div class="trip-meta">✅ Completed | Total: ${getSymbol()}${total.toFixed(2)}</div>
                                 </div>
@@ -545,15 +569,91 @@
             document.getElementById('completed-list').innerHTML = html;
         }
 
+        function renderSandeepExpenses() {
+            let totalPaid = 0;
+            let totalOwes = 0;
+            let expensesList = [];
+
+            trips.forEach(trip => {
+                if (trip.status === 'active' || trip.status === 'completed') {
+                    const total = trip.expenses.reduce((sum, e) => sum + e.amount, 0);
+                    const perPerson = trip.members.length > 0 ? total / trip.members.length : 0;
+                    
+                    const sandeepPaid = trip.expenses
+                        .filter(e => e.paidBy === OWNER)
+                        .reduce((sum, e) => sum + e.amount, 0);
+                    
+                    totalPaid += sandeepPaid;
+                    totalOwes += perPerson;
+                    
+                    if (sandeepPaid > 0 || perPerson > 0) {
+                        expensesList.push({
+                            tripName: trip.name,
+                            paid: sandeepPaid,
+                            owes: perPerson,
+                            status: trip.status
+                        });
+                    }
+                }
+            });
+
+            const netBalance = totalPaid - totalOwes;
+
+            let html = `
+                <div class="card">
+                    <h2 class="section-title">👤 Your Overall Expenses</h2>
+                    <div class="summary-grid">
+                        <div class="summary-card">
+                            <div class="summary-label">Total Paid</div>
+                            <div class="summary-amount">${getSymbol()}${totalPaid.toFixed(2)}</div>
+                        </div>
+                        <div class="summary-card secondary">
+                            <div class="summary-label">Total Owes</div>
+                            <div class="summary-amount">${getSymbol()}${totalOwes.toFixed(2)}</div>
+                        </div>
+                        <div class="summary-card ${netBalance < 0 ? 'tertiary' : 'secondary'}">
+                            <div class="summary-label">${netBalance < 0 ? 'You Receive' : 'You Pay'}</div>
+                            <div class="summary-amount">${getSymbol()}${Math.abs(netBalance).toFixed(2)}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (expensesList.length > 0) {
+                html += `
+                    <div class="card">
+                        <h3 class="section-title">📋 Trip-wise Breakdown</h3>
+                        ${expensesList.map(e => `
+                            <div class="trip-item">
+                                <div class="trip-name">${e.tripName}</div>
+                                <div class="trip-meta">${e.status === 'completed' ? '✅ Completed' : '🟢 Active'}</div>
+                                <div style="font-size: 12px; margin-top: 8px;">
+                                    <div>💰 You Paid: ${getSymbol()}${e.paid.toFixed(2)}</div>
+                                    <div>💳 Your Share: ${getSymbol()}${e.owes.toFixed(2)}</div>
+                                    <div style="font-weight: 700; margin-top: 4px; padding: 6px; background: ${e.paid > e.owes ? '#d4edda' : '#f8d7da'}; border-radius: 4px; color: ${e.paid > e.owes ? '#155724' : '#721c24'};">
+                                        ${e.paid > e.owes ? '✓ Receive: ' : '✗ Pay: '}${getSymbol()}${Math.abs(e.paid - e.owes).toFixed(2)}
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } else {
+                html += '<div class="empty">No trip expenses yet</div>';
+            }
+
+            document.getElementById('sandeep-content').innerHTML = html;
+        }
+
         function renderAll() {
             renderActiveTrips();
             renderCompletedTrips();
+            renderSandeepExpenses();
             if (selectedTripId && trips.find(t => t.id === selectedTripId)) {
                 renderTripDetail();
             }
         }
 
-        // Initialize
         document.getElementById('currency').value = currency;
         renderAll();
     </script>
