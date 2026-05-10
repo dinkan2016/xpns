@@ -4,71 +4,60 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#667eea">
-    <title>Trip Expense Tracker</title>
+    <title>Complete Expense Tracker</title>
     <link rel="manifest" href="manifest.json">
+    <meta name="description" content="Complete expense management system">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: "Segoe UI", Tahoma, sans-serif; background: #f8f9fa; color: #333; }
-        .app { min-height: 100vh; background: #f8f9fa; }
+        body { font-family: "Segoe UI", Tahoma, sans-serif; background: #f8f9fa; }
+        .app { min-height: 100vh; }
         .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; }
-        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+        .header-top { display: flex; justify-content: space-between; align-items: center; gap: 15px; flex-wrap: wrap; margin-bottom: 15px; }
         .title { display: flex; align-items: center; gap: 12px; }
         .icon { font-size: 32px; }
         .title-text h1 { font-size: 24px; margin: 0; }
-        .title-text p { font-size: 11px; opacity: 0.9; margin: 0; }
+        .title-text p { font-size: 11px; opacity: 0.9; }
+        .header-controls { display: flex; gap: 10px; align-items: center; }
         .header-info { font-size: 12px; background: rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 6px; }
-        select { padding: 8px 12px; border: none; border-radius: 6px; background: rgba(255,255,255,0.2); color: white; font-weight: 600; cursor: pointer; }
-        .tabs { display: flex; gap: 0; border-bottom: 2px solid rgba(255,255,255,0.3); flex-wrap: wrap; }
-        .tab { padding: 10px 15px; background: none; border: none; color: white; cursor: pointer; font-weight: 600; font-size: 13px; border-bottom: 3px solid transparent; }
+        select, input[type="month"] { padding: 8px 12px; border: none; border-radius: 6px; background: rgba(255,255,255,0.2); color: white; font-weight: 600; cursor: pointer; }
+        .tabs { display: flex; gap: 0; border-bottom: 2px solid rgba(255,255,255,0.3); overflow-x: auto; }
+        .tab { padding: 10px 12px; background: none; border: none; color: white; cursor: pointer; font-weight: 600; font-size: 12px; white-space: nowrap; border-bottom: 3px solid transparent; }
         .tab.active { border-bottom: 3px solid white; background: rgba(255,255,255,0.1); }
         .main { max-width: 1000px; margin: 0 auto; padding: 20px; }
-        .content { display: none; }
-        .content.show { display: block; }
         .card { background: white; border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 16px; }
-        .btn { padding: 8px 14px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px; transition: all 0.2s; }
+        .btn { padding: 8px 12px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 12px; }
         .btn-primary { background: #667eea; color: white; }
-        .btn-primary:hover { background: #5568d3; }
         .btn-secondary { background: #4ECDC4; color: white; }
         .btn-success { background: #6BCF7F; color: white; }
         .btn-danger { background: #FF6B6B; color: white; }
-        .btn-small { padding: 6px 10px; font-size: 12px; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .form-group { margin-bottom: 12px; }
-        .label { display: block; font-weight: 600; font-size: 13px; margin-bottom: 6px; }
-        .input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
+        .label { display: block; font-weight: 600; font-size: 12px; margin-bottom: 6px; }
+        .input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 12px; }
+        .error { color: #FF6B6B; font-size: 11px; margin-top: 4px; }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 16px; }
+        .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 16px; }
         .summary-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 16px; border-radius: 10px; text-align: center; }
         .summary-card.secondary { background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%); }
         .summary-card.tertiary { background: linear-gradient(135deg, #FF6B6B 0%, #FF5252 100%); }
-        .summary-label { font-size: 11px; opacity: 0.9; margin-bottom: 6px; }
-        .summary-amount { font-size: 22px; font-weight: 700; }
-        .expense-item { background: #f9f9f9; padding: 12px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #667eea; }
-        .expense-header { display: flex; justify-content: space-between; margin-bottom: 6px; }
-        .expense-desc { font-weight: 600; font-size: 13px; }
-        .expense-amount { font-weight: 700; color: #667eea; }
-        .expense-meta { font-size: 11px; color: #999; margin-bottom: 6px; }
-        .settlement { background: #f0f7ff; padding: 10px; border-radius: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; font-size: 12px; }
-        .settlement-amount { font-weight: 700; color: #4ECDC4; }
-        .member-chip { background: white; padding: 6px 12px; border-radius: 20px; border: 1px solid #ddd; font-size: 12px; display: inline-flex; align-items: center; gap: 6px; margin-right: 6px; margin-bottom: 6px; }
-        .member-chip.default { background: #667eea; color: white; border-color: #667eea; font-weight: 600; }
-        .member-remove { cursor: pointer; color: #FF6B6B; font-weight: 700; }
+        .summary-card.quaternary { background: linear-gradient(135deg, #FFD93D 0%, #FFA502 100%); }
+        .summary-label { font-size: 10px; opacity: 0.9; margin-bottom: 6px; }
+        .summary-amount { font-size: 20px; font-weight: 700; }
+        .item { background: #f9f9f9; padding: 12px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #667eea; }
+        .item-header { display: flex; justify-content: space-between; margin-bottom: 6px; font-weight: 600; font-size: 13px; }
+        .item-meta { font-size: 11px; color: #999; margin-bottom: 6px; }
         .empty { text-align: center; padding: 30px 20px; color: #999; }
-        .trip-item { background: #f9f9f9; padding: 12px; border-radius: 8px; margin-bottom: 10px; }
-        .trip-name { font-weight: 700; margin-bottom: 6px; }
-        .trip-meta { font-size: 11px; color: #999; margin-bottom: 8px; }
-        .whatsapp-btn { background: #25D366; color: white; padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 12px; }
-        .whatsapp-btn:hover { background: #20ba5a; }
         .section-title { font-size: 16px; font-weight: 700; margin-bottom: 12px; }
-        .person-settlement { background: #f0f7ff; padding: 10px; border-radius: 6px; margin-bottom: 8px; border-left: 4px solid #667eea; }
-        .person-settlement.default { background: #e8f5e9; border-left-color: #4CAF50; }
-        .person-name { font-weight: 700; margin-bottom: 4px; }
-        .person-stat { font-size: 12px; color: #999; margin-bottom: 4px; }
+        .person-item { background: #f0f7ff; padding: 10px; border-radius: 6px; margin-bottom: 8px; border-left: 4px solid #667eea; }
+        .person-name { font-weight: 700; }
+        .person-stat { font-size: 12px; color: #999; }
         .balance { padding: 6px; border-radius: 4px; margin-top: 6px; font-size: 12px; font-weight: 700; }
         .balance-positive { background: #f8d7da; color: #721c24; }
         .balance-negative { background: #d4edda; color: #155724; }
         @media (max-width: 600px) {
             .form-row { grid-template-columns: 1fr; }
             .summary-grid { grid-template-columns: repeat(2, 1fr); }
+            .tab { padding: 8px 10px; font-size: 11px; }
         }
     </style>
 </head>
@@ -77,14 +66,15 @@
         <div class="header">
             <div class="header-top">
                 <div class="title">
-                    <div class="icon">✈️</div>
+                    <div class="icon">💰</div>
                     <div class="title-text">
-                        <h1>Trip Tracker</h1>
-                        <p>Dynamic Expense Management</p>
+                        <h1>Expense Manager</h1>
+                        <p>Complete Financial Tracking</p>
                     </div>
                 </div>
-                <div style="display: flex; gap: 10px; align-items: center;">
+                <div class="header-controls">
                     <div class="header-info">👤 Sandeep</div>
+                    <input type="month" id="month-selector" onchange="changeMonth()">
                     <select id="currency" onchange="changeCurrency()">
                         <option value="INR">INR</option>
                         <option value="USD">USD</option>
@@ -93,569 +83,458 @@
                     </select>
                 </div>
             </div>
-            <div class="tabs">
-                <button class="tab active" onclick="switchTab('active')">🟢 Active</button>
-                <button class="tab" onclick="switchTab('detail')">📊 Details</button>
-                <button class="tab" onclick="switchTab('completed')">✅ Completed</button>
-                <button class="tab" onclick="switchTab('sandeep')">👤 My Expenses</button>
-            </div>
+            <div class="tabs" id="tabs-container"></div>
         </div>
 
-        <div class="main">
-            <div id="active-tab" class="content show">
-                <button class="btn btn-secondary" onclick="toggleCreateTrip()" style="width: 100%; margin-bottom: 16px;">
-                    <span id="create-btn-text">➕ Create New Trip</span>
-                </button>
-
-                <div id="create-form" style="display: none;">
-                    <div class="card">
-                        <div class="form-group">
-                            <label class="label">Trip Name</label>
-                            <input type="text" class="input" id="trip-name" placeholder="e.g., Bali Trip">
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="label">Date</label>
-                                <input type="date" class="input" id="trip-date">
-                            </div>
-                            <div class="form-group">
-                                <label class="label">Description</label>
-                                <input type="text" class="input" id="trip-desc" placeholder="Optional">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="label">👥 Members (In addition to Sandeep)</label>
-                            <div style="display: flex; gap: 6px;">
-                                <input type="text" class="input" id="member-input" placeholder="Add other members" style="flex: 1;">
-                                <button class="btn btn-primary btn-small" onclick="addMember()">Add</button>
-                            </div>
-                            <div id="members-list" style="margin-top: 8px;"></div>
-                        </div>
-                        <button class="btn btn-success" onclick="createTrip()" style="width: 100%;">✓ Create Trip</button>
-                    </div>
-                </div>
-
-                <div id="trips-list"></div>
-            </div>
-
-            <div id="detail-tab" class="content">
-                <div id="trip-detail-content"></div>
-            </div>
-
-            <div id="completed-tab" class="content">
-                <div id="completed-list"></div>
-            </div>
-
-            <div id="sandeep-tab" class="content">
-                <div id="sandeep-content"></div>
-            </div>
-        </div>
+        <div class="main" id="main-content"></div>
     </div>
 
     <script>
-        let trips = JSON.parse(localStorage.getItem('trips_v3')) || [];
-        let tempMembers = [];
-        let selectedTripId = null;
-        let currency = localStorage.getItem('currency') || 'INR';
+        // ===== INITIALIZATION =====
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed:', err));
+        }
+
         const OWNER = 'Sandeep';
-
         const symbols = { INR: '₹', USD: '$', EUR: '€', GBP: '£' };
-        const categories = ['Food', 'Accommodation', 'Transport', 'Activities', 'Shopping', 'Other'];
+        const expenseCategories = ['Food', 'Transport', 'Entertainment', 'Shopping', 'Utilities', 'Health', 'Education', 'Other'];
 
-        function getSymbol() { return symbols[currency] || currency; }
-        function saveTripData() { localStorage.setItem('trips_v3', JSON.stringify(trips)); }
+        let state = {
+            data: {
+                personal: JSON.parse(localStorage.getItem('personal_expenses') || '[]').filter(e => e && e.id),
+                trips: JSON.parse(localStorage.getItem('trips_complete') || '[]').filter(t => t && t.id),
+                lending: JSON.parse(localStorage.getItem('lending_expenses') || '[]').filter(l => l && l.id)
+            },
+            currency: localStorage.getItem('currency') || 'INR',
+            currentMonth: new Date().toISOString().slice(0, 7),
+            activeTab: 'dashboard',
+            selectedTripId: null,
+            showPersonalForm: false,
+            showTripForm: false,
+            showLendingForm: false
+        };
 
-        function changeCurrency() {
-            currency = document.getElementById('currency').value;
-            localStorage.setItem('currency', currency);
-            renderAll();
+        function getSymbol() { return symbols[state.currency] || state.currency; }
+        function saveData() { 
+            localStorage.setItem('personal_expenses', JSON.stringify(state.data.personal));
+            localStorage.setItem('trips_complete', JSON.stringify(state.data.trips));
+            localStorage.setItem('lending_expenses', JSON.stringify(state.data.lending));
+        }
+        function changeMonth() { state.currentMonth = document.getElementById('month-selector').value; render(); }
+        function changeCurrency() { state.currency = document.getElementById('currency').value; localStorage.setItem('currency', state.currency); render(); }
+        function switchTab(tab) { state.activeTab = tab; state.selectedTripId = null; state.showPersonalForm = false; state.showTripForm = false; state.showLendingForm = false; render(); }
+
+        // ===== VALIDATION FUNCTIONS =====
+        function validateAmount(amt) {
+            const parsed = parseFloat(amt);
+            return !isNaN(parsed) && parsed > 0 ? parsed : null;
         }
 
-        function switchTab(tab) {
-            document.querySelectorAll('.content').forEach(el => el.classList.remove('show'));
-            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
-            
-            if (tab === 'active') {
-                document.getElementById('active-tab').classList.add('show');
-                document.querySelectorAll('.tab')[0].classList.add('active');
-                renderActiveTrips();
-            } else if (tab === 'detail') {
-                document.getElementById('detail-tab').classList.add('show');
-                document.querySelectorAll('.tab')[1].classList.add('active');
-                renderTripDetail();
-            } else if (tab === 'completed') {
-                document.getElementById('completed-tab').classList.add('show');
-                document.querySelectorAll('.tab')[2].classList.add('active');
-                renderCompletedTrips();
-            } else if (tab === 'sandeep') {
-                document.getElementById('sandeep-tab').classList.add('show');
-                document.querySelectorAll('.tab')[3].classList.add('active');
-                renderSandeepExpenses();
-            }
+        function validateText(text) {
+            return text.trim().length > 0 ? text.trim() : null;
         }
 
-        function toggleCreateTrip() {
-            const form = document.getElementById('create-form');
-            const btn = document.getElementById('create-btn-text');
-            
-            if (form.style.display === 'none') {
-                form.style.display = 'block';
-                btn.textContent = '❌ Cancel';
-                initTripDate();
-            } else {
-                form.style.display = 'none';
-                btn.textContent = '➕ Create New Trip';
-                tempMembers = [];
-                renderMembers();
-            }
+        function safeDiv(num, denom) {
+            return denom > 0 ? num / denom : 0;
         }
 
-        function initTripDate() {
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('trip-date').value = today;
+        function roundTwoDecimals(num) {
+            return isNaN(num) ? 0 : Math.round(num * 100) / 100;
         }
 
-        function addMember() {
-            const input = document.getElementById('member-input');
-            const name = input.value.trim();
-            if (name && name !== OWNER && !tempMembers.includes(name)) {
-                tempMembers.push(name);
-                input.value = '';
-                renderMembers();
-            }
-        }
-
-        function removeMember(index) {
-            tempMembers.splice(index, 1);
-            renderMembers();
-        }
-
-        function renderMembers() {
-            const list = document.getElementById('members-list');
-            const members = [OWNER, ...tempMembers];
-            list.innerHTML = members.map((m, i) => 
-                m === OWNER 
-                    ? `<div class="member-chip default">${m} (You)</div>`
-                    : `<div class="member-chip">${m}<span class="member-remove" onclick="removeMember(${i-1})">✕</span></div>`
+        // ===== RENDER FUNCTIONS =====
+        function renderTabs() {
+            const tabs = ['📊 Dashboard', '💳 Personal', '✈️ Trips', '💸 Lending', '👤 My Expenses'];
+            const tabKeys = ['dashboard', 'personal', 'trips', 'lending', 'sandeep'];
+            document.getElementById('tabs-container').innerHTML = tabs.map((t, i) => 
+                `<button class="tab ${state.activeTab === tabKeys[i] ? 'active' : ''}" onclick="switchTab('${tabKeys[i]}')">${t}</button>`
             ).join('');
         }
 
-        function createTrip() {
-            const name = document.getElementById('trip-name').value.trim();
-            const date = document.getElementById('trip-date').value;
-            const desc = document.getElementById('trip-desc').value.trim();
-
-            if (!name) {
-                alert('Please enter trip name');
-                return;
-            }
-
-            const newTrip = {
-                id: Date.now(),
-                name, date, desc,
-                members: [OWNER, ...tempMembers],
-                expenses: [],
-                status: 'active',
-                createdAt: new Date().toISOString()
-            };
-
-            trips.push(newTrip);
-            saveTripData();
+        function render() {
+            renderTabs();
+            document.getElementById('month-selector').value = state.currentMonth;
             
-            document.getElementById('trip-name').value = '';
-            document.getElementById('trip-desc').value = '';
-            tempMembers = [];
-            document.getElementById('members-list').innerHTML = '';
-            document.getElementById('create-form').style.display = 'none';
-            document.getElementById('create-btn-text').textContent = '➕ Create New Trip';
+            let content = '';
+            if (state.activeTab === 'dashboard') content = renderDashboard();
+            else if (state.activeTab === 'personal') content = renderPersonalTab();
+            else if (state.activeTab === 'trips') content = renderTripsTab();
+            else if (state.activeTab === 'lending') content = renderLendingTab();
+            else if (state.activeTab === 'sandeep') content = renderSandeepTab();
             
-            renderActiveTrips();
+            document.getElementById('main-content').innerHTML = content;
         }
 
-        function renderActiveTrips() {
-            const active = trips.filter(t => t.status === 'active');
-            const html = active.length === 0 
-                ? '<div class="empty">No active trips. Create one!</div>'
-                : active.map(t => `
-                    <div class="card">
-                        <div style="display: flex; justify-content: space-between;">
-                            <div style="flex: 1;">
-                                <div class="trip-name">${t.name}</div>
-                                <div class="trip-meta">📅 ${new Date(t.date).toLocaleDateString()} | 👥 ${t.members.length} | 💰 ${t.expenses.length} expenses</div>
-                            </div>
-                            <div>
-                                <button class="btn btn-primary btn-small" onclick="selectTrip(${t.id})">View</button>
-                                <button class="btn btn-danger btn-small" onclick="endTrip(${t.id})" style="margin-top: 4px;">End</button>
-                            </div>
-                        </div>
-                    </div>
-                `).join('');
+        function renderDashboard() {
+            const monthExpenses = getMonthExpenses();
+            let html = `<h2 class="section-title">📊 ${new Date(state.currentMonth + '-01').toLocaleDateString('en-US', {year: 'numeric', month: 'long'})}</h2>`;
+            html += `<div class="summary-grid">
+                <div class="summary-card"><div class="summary-label">Total</div><div class="summary-amount">${getSymbol()}${roundTwoDecimals(monthExpenses.total).toFixed(2)}</div></div>
+                <div class="summary-card secondary"><div class="summary-label">Personal</div><div class="summary-amount">${getSymbol()}${roundTwoDecimals(monthExpenses.personal).toFixed(2)}</div></div>
+                <div class="summary-card tertiary"><div class="summary-label">Trip Shares</div><div class="summary-amount">${getSymbol()}${roundTwoDecimals(monthExpenses.tripShares).toFixed(2)}</div></div>
+                <div class="summary-card quaternary"><div class="summary-label">Lending</div><div class="summary-amount">${getSymbol()}${roundTwoDecimals(Math.abs(monthExpenses.lendingBalance)).toFixed(2)}</div></div>
+            </div>`;
 
-            document.getElementById('trips-list').innerHTML = html;
+            const settlements = getMonthSettlements();
+            if (settlements.length > 0) {
+                html += `<div class="card"><h3 class="section-title">💸 Settlement (Trips)</h3>`;
+                settlements.forEach(s => html += `<div class="person-item"><div class="person-name">${s.from} → ${s.to}: ${getSymbol()}${roundTwoDecimals(s.amount).toFixed(2)}</div></div>`);
+                html += `</div>`;
+            }
+
+            return html;
+        }
+
+        function renderPersonalTab() {
+            let html = `<button class="btn btn-primary" onclick="togglePersonalForm()" style="width: 100%; margin-bottom: 12px;">➕ Add Expense</button>`;
+            
+            if (state.showPersonalForm) {
+                const today = new Date().toISOString().split('T')[0];
+                html += `<div class="card">
+                    <div class="form-group"><label class="label">Description</label><input type="text" class="input" id="pers-desc" maxlength="50" placeholder="What did you spend on?"></div>
+                    <div class="form-row">
+                        <div class="form-group"><label class="label">Amount</label><input type="number" class="input" id="pers-amt" min="0" step="0.01" placeholder="0.00"></div>
+                        <div class="form-group"><label class="label">Category</label><select class="input" id="pers-cat">${expenseCategories.map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>
+                    </div>
+                    <div class="form-group"><label class="label">Date</label><input type="date" class="input" id="pers-date" value="${today}"></div>
+                    <button class="btn btn-success" onclick="addPersonal()" style="width: 100%;">✓ Add</button>
+                </div>`;
+            }
+
+            const monthPersonal = state.data.personal.filter(e => e.date && e.date.slice(0, 7) === state.currentMonth);
+            html += `<div class="card"><h3 class="section-title">📋 Expenses (${monthPersonal.length})</h3>`;
+            html += monthPersonal.length === 0 ? '<div class="empty">No expenses</div>' : monthPersonal.map(e => 
+                `<div class="item"><div class="item-header"><span>${e.description || 'Unnamed'}</span><span>${getSymbol()}${roundTwoDecimals(e.amount).toFixed(2)}</span></div>
+                <div class="item-meta">🏷️ ${e.category || 'Other'} | 📅 ${e.date ? new Date(e.date).toLocaleDateString() : 'No date'}</div>
+                <button class="btn btn-danger" onclick="deletePersonal(${e.id})">Delete</button></div>`
+            ).join('');
+            html += `</div>`;
+            return html;
+        }
+
+        function renderTripsTab() {
+            let html = `<button class="btn btn-secondary" onclick="toggleCreateTripForm()" style="width: 100%; margin-bottom: 12px;">➕ Create Trip</button>`;
+            
+            if (state.showTripForm) {
+                const today = new Date().toISOString().split('T')[0];
+                html += `<div class="card">
+                    <div class="form-group"><label class="label">Trip Name</label><input type="text" class="input" id="trip-name" maxlength="50" placeholder="e.g., Bali Trip"></div>
+                    <div class="form-row">
+                        <div class="form-group"><label class="label">Date</label><input type="date" class="input" id="trip-date" value="${today}"></div>
+                        <div class="form-group"><label class="label">Members (besides Sandeep)</label><input type="text" class="input" id="trip-members" maxlength="200" placeholder="Comma separated"></div>
+                    </div>
+                    <button class="btn btn-success" onclick="createTrip()" style="width: 100%;">✓ Create</button>
+                </div>`;
+            }
+
+            const active = state.data.trips.filter(t => t.status === 'active');
+            html += `<div class="card"><h3 class="section-title">🟢 Active Trips (${active.length})</h3>`;
+            html += active.length === 0 ? '<div class="empty">No active trips</div>' : active.map(t => {
+                const tripTotal = t.expenses ? t.expenses.reduce((s,e)=>s + (e.amount || 0),0) : 0;
+                return `<div class="item"><div class="item-header"><span>${t.name || 'Unnamed'}</span><span>${getSymbol()}${roundTwoDecimals(tripTotal).toFixed(2)}</span></div>
+                <div class="item-meta">👥 ${t.members ? t.members.length : 0} | 💰 ${t.expenses ? t.expenses.length : 0} expenses</div>
+                <button class="btn btn-primary" onclick="selectTrip(${t.id})">View</button>
+                <button class="btn btn-danger" onclick="endTrip(${t.id})">End</button></div>`
+            }).join('');
+            html += `</div>`;
+            return html;
+        }
+
+        function renderLendingTab() {
+            let html = `<button class="btn btn-primary" onclick="toggleLendingForm()" style="width: 100%; margin-bottom: 12px;">➕ Add Lending</button>`;
+            
+            if (state.showLendingForm) {
+                const today = new Date().toISOString().split('T')[0];
+                const dueDate = new Date(Date.now() + 7*24*60*60*1000).toISOString().split('T')[0];
+                html += `<div class="card">
+                    <div class="form-group"><label class="label">Person</label><input type="text" class="input" id="lend-person" maxlength="50" placeholder="Name"></div>
+                    <div class="form-row">
+                        <div class="form-group"><label class="label">Amount</label><input type="number" class="input" id="lend-amt" min="0" step="0.01" placeholder="0.00"></div>
+                        <div class="form-group"><label class="label">Type</label><select class="input" id="lend-type"><option value="lent">I Lent</option><option value="owe">I Owe</option></select></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label class="label">Given Date</label><input type="date" class="input" id="lend-date" value="${today}"></div>
+                        <div class="form-group"><label class="label">Due Date</label><input type="date" class="input" id="lend-due" value="${dueDate}"></div>
+                    </div>
+                    <button class="btn btn-success" onclick="addLending()" style="width: 100%;">✓ Add</button>
+                </div>`;
+            }
+
+            const pending = state.data.lending.filter(l => !l.isSettled);
+            html += `<div class="card"><h3 class="section-title">💸 Pending (${pending.length})</h3>`;
+            html += pending.length === 0 ? '<div class="empty">No pending</div>' : pending.map(l => 
+                `<div class="item"><div class="item-header"><span>${l.personName || 'Unknown'}</span><span>${getSymbol()}${roundTwoDecimals(l.amount).toFixed(2)}</span></div>
+                <div class="item-meta">${l.type === 'lent' ? '💰 Lent' : '💳 Owed'} | Due: ${l.dueDate ? new Date(l.dueDate).toLocaleDateString() : 'No date'}</div>
+                <button class="btn btn-success" onclick="settleLending(${l.id})">Settle</button>
+                <button class="btn btn-danger" onclick="deleteLending(${l.id})">Delete</button></div>`
+            ).join('');
+            html += `</div>`;
+            return html;
+        }
+
+        function renderSandeepTab() {
+            let totalPaid = 0, totalOwes = 0;
+            state.data.personal.forEach(e => totalPaid += e.amount || 0);
+            state.data.trips.forEach(t => {
+                const tripTotal = t.expenses ? t.expenses.reduce((s,e)=>s + (e.amount || 0),0) : 0;
+                const share = safeDiv(tripTotal, t.members ? t.members.length : 1);
+                totalOwes += share;
+                const sandeepPaid = t.expenses ? t.expenses.filter(e => e.paidBy === OWNER).reduce((s,e)=>s + (e.amount || 0),0) : 0;
+                totalPaid += sandeepPaid;
+            });
+
+            let html = `<div class="summary-grid">
+                <div class="summary-card"><div class="summary-label">Total Spent</div><div class="summary-amount">${getSymbol()}${roundTwoDecimals(totalPaid).toFixed(2)}</div></div>
+                <div class="summary-card secondary"><div class="summary-label">Overall Balance</div><div class="summary-amount">${getSymbol()}${roundTwoDecimals(totalPaid - totalOwes).toFixed(2)}</div></div>
+            </div>`;
+            return html;
+        }
+
+        // ===== CALCULATION FUNCTIONS =====
+        function getMonthExpenses() {
+            let personal = 0, tripShares = 0, lent = 0, owed = 0;
+            state.data.personal.filter(e => e.date && e.date.slice(0, 7) === state.currentMonth).forEach(e => personal += e.amount || 0);
+            state.data.trips.filter(t => t.date && t.date.slice(0, 7) === state.currentMonth).forEach(t => {
+                const total = t.expenses ? t.expenses.reduce((s,e)=>s + (e.amount || 0),0) : 0;
+                tripShares += safeDiv(total, t.members ? t.members.length : 1);
+            });
+            state.data.lending.filter(l => l.givenDate && l.givenDate.slice(0, 7) === state.currentMonth && !l.isSettled).forEach(l => {
+                if (l.type === 'lent') lent += l.amount || 0;
+                else owed += l.amount || 0;
+            });
+            return { personal, tripShares, lendingBalance: owed - lent, total: personal + tripShares + owed };
+        }
+
+        function getMonthSettlements() {
+            const settlements = [];
+            state.data.trips.filter(t => t.date && t.date.slice(0, 7) === state.currentMonth).forEach(t => {
+                const total = t.expenses ? t.expenses.reduce((s,e)=>s + (e.amount || 0),0) : 0;
+                if (t.members && t.members.length === 0) return;
+                const perPerson = safeDiv(total, t.members.length);
+                const balances = {};
+                t.members.forEach(m => balances[m] = 0);
+                t.expenses && t.expenses.forEach(e => balances[e.paidBy] = (balances[e.paidBy] || 0) + (e.amount || 0));
+                const temp = {};
+                Object.keys(balances).forEach(m => temp[m] = balances[m] - perPerson);
+                Object.entries(temp).forEach(([p, b]) => {
+                    if (b < -0.01) {
+                        Object.entries(temp).forEach(([c, cb]) => {
+                            if (cb > 0.01 && b < -0.01) {
+                                const amt = Math.min(Math.abs(b), cb);
+                                settlements.push({from: p, to: c, amount: amt});
+                                temp[p] = roundTwoDecimals(temp[p] + amt);
+                                temp[c] = roundTwoDecimals(temp[c] - amt);
+                            }
+                        });
+                    }
+                });
+            });
+            return settlements;
+        }
+
+        // ===== ACTION FUNCTIONS =====
+        function togglePersonalForm() { state.showPersonalForm = !state.showPersonalForm; render(); }
+        function toggleCreateTripForm() { state.showTripForm = !state.showTripForm; render(); }
+        function toggleLendingForm() { state.showLendingForm = !state.showLendingForm; render(); }
+
+        function addPersonal() {
+            const desc = validateText(document.getElementById('pers-desc').value);
+            const amt = validateAmount(document.getElementById('pers-amt').value);
+            const cat = document.getElementById('pers-cat').value;
+            const date = document.getElementById('pers-date').value;
+            
+            if (!desc || !amt || !date) {
+                alert('Please fill all fields with valid values');
+                return;
+            }
+            
+            state.data.personal.push({id: Date.now(), description: desc, amount: roundTwoDecimals(amt), category: cat, date});
+            saveData();
+            state.showPersonalForm = false;
+            render();
+        }
+
+        function deletePersonal(id) {
+            if (confirm('Delete expense?')) {
+                state.data.personal = state.data.personal.filter(e => e.id !== id);
+                saveData();
+                render();
+            }
+        }
+
+        function createTrip() {
+            const name = validateText(document.getElementById('trip-name').value);
+            const date = document.getElementById('trip-date').value;
+            const memberText = document.getElementById('trip-members').value;
+            const members = [OWNER, ...memberText.split(',').map(m => validateText(m)).filter(m => m && m !== OWNER)];
+            
+            if (!name || !date || members.length < 2) {
+                alert('Please enter trip name, date, and at least one other member');
+                return;
+            }
+            
+            state.data.trips.push({id: Date.now(), name, date, members, expenses: [], status: 'active'});
+            saveData();
+            state.showTripForm = false;
+            render();
         }
 
         function selectTrip(id) {
-            selectedTripId = id;
-            switchTab('detail');
-        }
-
-        function renderTripDetail() {
-            const trip = trips.find(t => t.id === selectedTripId);
+            state.selectedTripId = id;
+            const trip = state.data.trips.find(t => t.id === id);
             if (!trip) return;
-
-            const total = trip.expenses.reduce((sum, e) => sum + e.amount, 0);
-            const perPerson = trip.members.length > 0 ? total / trip.members.length : 0;
-
-            let html = `
-                <h2 class="section-title">${trip.name}</h2>
-                <div class="summary-grid">
-                    <div class="summary-card"><div class="summary-label">Total</div><div class="summary-amount">${getSymbol()}${total.toFixed(2)}</div></div>
-                    <div class="summary-card secondary"><div class="summary-label">Expenses</div><div class="summary-amount">${trip.expenses.length}</div></div>
-                    <div class="summary-card tertiary"><div class="summary-label">Per Person</div><div class="summary-amount">${getSymbol()}${perPerson.toFixed(2)}</div></div>
-                </div>
-
-                <button class="btn btn-secondary" onclick="toggleAddExpense()" style="width: 100%; margin-bottom: 12px;">
-                    <span id="exp-btn">➕ Add Expense</span>
-                </button>
-
-                <div id="expense-form-container"></div>
-
-                <div class="card">
-                    <h3 class="section-title">📋 Expenses</h3>
-                    <div id="expenses-list">${trip.expenses.length === 0 ? '<div class="empty">No expenses yet</div>' : trip.expenses.map(e => `
-                        <div class="expense-item">
-                            <div class="expense-header">
-                                <div class="expense-desc">${e.description}</div>
-                                <div class="expense-amount">${getSymbol()}${e.amount.toFixed(2)}</div>
-                            </div>
-                            <div class="expense-meta">👤 ${e.paidBy} | 🏷️ ${e.category} | 📅 ${new Date(e.date).toLocaleDateString()}</div>
-                            ${e.notes ? `<div style="font-size: 11px; color: #667eea; margin: 4px 0;">📝 ${e.notes}</div>` : ''}
-                            ${e.image ? `<div style="font-size: 11px; color: #4ECDC4;">📷 Receipt attached</div>` : ''}
-                            <button class="btn btn-danger btn-small" onclick="deleteExpense(${trip.id}, ${e.id})" style="margin-top: 6px;">Delete</button>
-                        </div>
-                    `).join('')}</div>
-                </div>
-            `;
-
-            html += `
-                <div class="card">
-                    <h3 class="section-title">💸 Settlement</h3>
-                    <div id="settlement-content"></div>
-                    <button class="whatsapp-btn" onclick="shareViaWhatsApp(${trip.id})">📱 Share Summary</button>
-                    <button class="btn btn-success" onclick="endTrip(${trip.id})" style="margin-top: 8px;">End Trip</button>
-                </div>
-            `;
-
-            document.getElementById('trip-detail-content').innerHTML = html;
-            renderSettlement(trip);
-            renderExpenseForm();
-        }
-
-        function toggleAddExpense() {
-            const container = document.getElementById('expense-form-container');
-            if (container.style.display !== 'none' && container.innerHTML !== '') {
-                container.style.display = 'none';
-                container.innerHTML = '';
-            } else {
-                renderExpenseForm();
-                container.style.display = 'block';
-            }
-        }
-
-        function renderExpenseForm() {
-            const trip = trips.find(t => t.id === selectedTripId);
-            if (!trip) return;
-
-            const today = new Date().toISOString().split('T')[0];
-            const form = `
-                <div class="card">
-                    <div class="form-group">
-                        <label class="label">What was spent on?</label>
-                        <input type="text" class="input" id="exp-desc" placeholder="e.g., Hotel, Dinner">
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="label">Amount</label>
-                            <input type="number" class="input" id="exp-amount" placeholder="0.00" step="0.01">
-                        </div>
-                        <div class="form-group">
-                            <label class="label">Who Paid?</label>
-                            <select class="input" id="exp-paidby">
-                                <option value="">Select person</option>
-                                ${trip.members.map(m => `<option value="${m}">${m}${m === OWNER ? ' (You)' : ''}</option>`).join('')}
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="label">Category</label>
-                            <select class="input" id="exp-category">
-                                ${categories.map(c => `<option value="${c}">${c}</option>`).join('')}
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="label">Date</label>
-                            <input type="date" class="input" id="exp-date" value="${today}">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="label">📝 Notes</label>
-                        <input type="text" class="input" id="exp-notes" placeholder="e.g., Premium room, fancy restaurant">
-                    </div>
-                    <div class="form-group">
-                        <label class="label">📷 Receipt/Image (Optional)</label>
-                        <input type="file" class="input" id="exp-image" accept="image/*">
-                    </div>
-                    <button class="btn btn-success" onclick="addExpense()" style="width: 100%;">✓ Add Expense</button>
-                </div>
-            `;
-
-            document.getElementById('expense-form-container').innerHTML = form;
-        }
-
-        function addExpense() {
-            const trip = trips.find(t => t.id === selectedTripId);
-            const desc = document.getElementById('exp-desc').value.trim();
-            const amount = parseFloat(document.getElementById('exp-amount').value);
-            const paidBy = document.getElementById('exp-paidby').value;
-            const category = document.getElementById('exp-category').value;
-            const date = document.getElementById('exp-date').value;
-            const notes = document.getElementById('exp-notes').value.trim();
-            const imageInput = document.getElementById('exp-image');
-            const image = imageInput.files.length > 0 ? imageInput.files[0].name : null;
-
-            if (!desc || !amount || !paidBy) {
-                alert('Please fill all required fields');
-                return;
-            }
-
-            const exp = { id: Date.now(), description: desc, amount, paidBy, category, date, notes, image };
-            trip.expenses.push(exp);
-            saveTripData();
-
-            document.getElementById('expense-form-container').innerHTML = '';
-            document.getElementById('expense-form-container').style.display = 'none';
-            renderTripDetail();
-        }
-
-        function deleteExpense(tripId, expId) {
-            const trip = trips.find(t => t.id === tripId);
-            trip.expenses = trip.expenses.filter(e => e.id !== expId);
-            saveTripData();
-            renderTripDetail();
-        }
-
-        function renderSettlement(trip) {
-            const total = trip.expenses.reduce((sum, e) => sum + e.amount, 0);
-            const perPerson = trip.members.length > 0 ? total / trip.members.length : 0;
+            
+            const total = trip.expenses ? trip.expenses.reduce((s,e)=>s + (e.amount || 0),0) : 0;
+            const perPerson = safeDiv(total, trip.members ? trip.members.length : 1);
+            
+            let html = `<button class="btn btn-secondary" onclick="switchTab('trips')" style="margin-bottom: 12px;">← Back</button>`;
+            html += `<h2 class="section-title">${trip.name || 'Unnamed'}</h2>`;
+            html += `<div class="summary-grid">
+                <div class="summary-card"><div class="summary-label">Total</div><div class="summary-amount">${getSymbol()}${roundTwoDecimals(total).toFixed(2)}</div></div>
+                <div class="summary-card secondary"><div class="summary-label">Per Person</div><div class="summary-amount">${getSymbol()}${roundTwoDecimals(perPerson).toFixed(2)}</div></div>
+                <div class="summary-card tertiary"><div class="summary-label">Expenses</div><div class="summary-amount">${trip.expenses ? trip.expenses.length : 0}</div></div>
+            </div>`;
+            
+            html += `<button class="btn btn-primary" id="add-exp-btn" onclick="toggleTripExpenseForm()" style="width: 100%; margin-bottom: 12px;">➕ Add Expense</button>`;
+            
+            html += `<div id="trip-exp-form"></div>`;
+            
+            html += `<div class="card"><h3 class="section-title">💰 Expenses</h3>`;
+            html += (!trip.expenses || trip.expenses.length === 0) ? '<div class="empty">No expenses</div>' : trip.expenses.map(e => 
+                `<div class="item"><div class="item-header"><span>${e.description || 'Unnamed'}</span><span>${getSymbol()}${roundTwoDecimals(e.amount).toFixed(2)}</span></div>
+                <div class="item-meta">👤 ${e.paidBy || 'Unknown'} | 📅 ${e.date ? new Date(e.date).toLocaleDateString() : 'No date'}</div>
+                <button class="btn btn-danger" onclick="deleteTripExpense(${id}, ${e.id})">Delete</button></div>`
+            ).join('');
+            html += `</div>`;
 
             const balances = {};
-            trip.members.forEach(m => balances[m] = 0);
-
-            trip.expenses.forEach(e => {
-                balances[e.paidBy] += e.amount;
+            (trip.members || []).forEach(m => balances[m] = 0);
+            (trip.expenses || []).forEach(e => balances[e.paidBy] = (balances[e.paidBy] || 0) + (e.amount || 0));
+            
+            html += `<div class="card"><h3 class="section-title">💸 Settlement</h3>`;
+            (trip.members || []).forEach(m => {
+                const paid = balances[m] || 0;
+                const owes = perPerson;
+                const balance = paid - owes;
+                html += `<div class="person-item"><div class="person-name">${m} ${m === OWNER ? '(You)' : ''}</div>
+                    <div class="person-stat">Paid: ${getSymbol()}${roundTwoDecimals(paid).toFixed(2)} | Owes: ${getSymbol()}${roundTwoDecimals(owes).toFixed(2)}</div>
+                    <div class="balance ${balance < 0 ? 'balance-negative' : 'balance-positive'}">${balance < 0 ? '✓ Receive: ' : '✗ Pay: '}${getSymbol()}${roundTwoDecimals(Math.abs(balance)).toFixed(2)}</div></div>`;
             });
-
-            const owes = {};
-            trip.members.forEach(m => {
-                owes[m] = perPerson;
-            });
-
-            const netBalance = {};
-            trip.members.forEach(m => {
-                netBalance[m] = balances[m] - owes[m];
-            });
-
-            const settlement = [];
-            const temp = { ...netBalance };
-
-            Object.entries(temp).forEach(([person, balance]) => {
-                if (balance < -0.01) {
-                    Object.entries(temp).forEach(([creditor, creditorBalance]) => {
-                        if (creditorBalance > 0.01 && balance < -0.01) {
-                            const amount = Math.min(Math.abs(balance), creditorBalance);
-                            settlement.push({ from: person, to: creditor, amount });
-                            temp[person] += amount;
-                            temp[creditor] -= amount;
-                        }
-                    });
-                }
-            });
-
-            let html = `
-                <div style="margin-bottom: 12px;">
-                    <div style="margin-bottom: 8px;"><strong>Total:</strong> ${getSymbol()}${total.toFixed(2)} | <strong>Per Person Owes:</strong> ${getSymbol()}${perPerson.toFixed(2)}</div>
-                </div>
-            `;
-
-            html += '<h4 style="margin-bottom: 8px; font-size: 13px;">Member Balances:</h4>';
-            trip.members.forEach(m => {
-                const paidAmount = balances[m];
-                const owesAmount = owes[m];
-                const balance = netBalance[m];
-                const isDefault = m === OWNER;
-                
-                html += `
-                    <div class="person-settlement ${isDefault ? 'default' : ''}">
-                        <div class="person-name">${m}${isDefault ? ' (You)' : ''}</div>
-                        <div class="person-stat">💰 Paid: ${getSymbol()}${paidAmount.toFixed(2)}</div>
-                        <div class="person-stat">💳 Owes (Share): ${getSymbol()}${owesAmount.toFixed(2)}</div>
-                        <div class="balance ${balance < 0 ? 'balance-negative' : 'balance-positive'}">
-                            ${balance < 0 ? '✓ Should Receive: ' + getSymbol() + Math.abs(balance).toFixed(2) : '✗ Should Pay: ' + getSymbol() + Math.abs(balance).toFixed(2)}
-                        </div>
-                    </div>
-                `;
-            });
-
-            if (settlement.length > 0) {
-                html += '<h4 style="margin-top: 12px; margin-bottom: 8px; font-size: 13px;">Transfers Needed:</h4>';
-                settlement.forEach(s => {
-                    html += `<div class="settlement">${s.from} → ${s.to}<span class="settlement-amount">${getSymbol()}${s.amount.toFixed(2)}</span></div>`;
-                });
-            }
-
-            document.getElementById('settlement-content').innerHTML = html;
+            html += `</div>`;
+            html += `<button class="btn btn-success" onclick="endTrip(${id})" style="margin-top: 12px;">End Trip</button>`;
+            
+            document.getElementById('main-content').innerHTML = html;
         }
 
-        function shareViaWhatsApp(tripId) {
-            const trip = trips.find(t => t.id === tripId);
-            const total = trip.expenses.reduce((sum, e) => sum + e.amount, 0);
-            const perPerson = trip.members.length > 0 ? total / trip.members.length : 0;
+        function toggleTripExpenseForm() {
+            const container = document.getElementById('trip-exp-form');
+            if (!container) return;
+            if (container.innerHTML) {
+                container.innerHTML = '';
+            } else {
+                const trip = state.data.trips.find(t => t.id === state.selectedTripId);
+                if (!trip) return;
+                const today = new Date().toISOString().split('T')[0];
+                container.innerHTML = `<div class="card">
+                    <div class="form-group"><label class="label">Description</label><input type="text" class="input" id="texp-desc" maxlength="50" placeholder="What was spent on?"></div>
+                    <div class="form-row">
+                        <div class="form-group"><label class="label">Amount</label><input type="number" class="input" id="texp-amt" min="0" step="0.01" placeholder="0.00"></div>
+                        <div class="form-group"><label class="label">Who Paid</label><select class="input" id="texp-paid">${trip.members.map(m => `<option value="${m}">${m}${m === OWNER ? ' (You)' : ''}</option>`).join('')}</select></div>
+                    </div>
+                    <div class="form-group"><label class="label">Date</label><input type="date" class="input" id="texp-date" value="${today}"></div>
+                    <button class="btn btn-success" onclick="addTripExpense()" style="width: 100%;">✓ Add</button>
+                </div>`;
+            }
+        }
 
-            let message = `🎉 TRIP SUMMARY: ${trip.name}\n`;
-            message += `━━━━━━━━━━━━━━━━━━━━━\n\n`;
-            message += `💰 TOTAL: ${getSymbol()}${total.toFixed(2)}\n`;
-            message += `Per Person Owes: ${getSymbol()}${perPerson.toFixed(2)}\n\n`;
+        function addTripExpense() {
+            const desc = validateText(document.getElementById('texp-desc').value);
+            const amt = validateAmount(document.getElementById('texp-amt').value);
+            const paid = document.getElementById('texp-paid').value;
+            const date = document.getElementById('texp-date').value;
+            
+            if (!desc || !amt || !paid || !date) {
+                alert('Please fill all fields with valid values');
+                return;
+            }
+            
+            const trip = state.data.trips.find(t => t.id === state.selectedTripId);
+            if (trip) {
+                trip.expenses.push({id: Date.now(), description: desc, amount: roundTwoDecimals(amt), paidBy: paid, date});
+                saveData();
+                selectTrip(state.selectedTripId);
+            }
+        }
 
-            message += `💵 WHO PAID:\n`;
-            const paidBy = {};
-            trip.expenses.forEach(e => paidBy[e.paidBy] = (paidBy[e.paidBy] || 0) + e.amount);
-            Object.entries(paidBy).forEach(([person, amount]) => {
-                message += `  ${person}: ${getSymbol()}${amount.toFixed(2)}\n`;
-            });
-
-            message += `\n✅ Everyone settled fairly!`;
-
-            window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+        function deleteTripExpense(tripId, expId) {
+            if (confirm('Delete expense?')) {
+                const trip = state.data.trips.find(t => t.id === tripId);
+                if (trip) {
+                    trip.expenses = trip.expenses.filter(e => e.id !== expId);
+                    saveData();
+                    selectTrip(tripId);
+                }
+            }
         }
 
         function endTrip(id) {
-            const trip = trips.find(t => t.id === id);
-            trip.status = 'completed';
-            saveTripData();
-            selectedTripId = null;
-            renderAll();
-        }
-
-        function renderCompletedTrips() {
-            const completed = trips.filter(t => t.status === 'completed');
-            const html = completed.length === 0
-                ? '<div class="empty">No completed trips</div>'
-                : completed.map(t => {
-                    const total = t.expenses.reduce((sum, e) => sum + e.amount, 0);
-                    return `
-                        <div class="card">
-                            <div style="display: flex; justify-content: space-between;">
-                                <div style="flex: 1;">
-                                    <div class="trip-name">${t.name}</div>
-                                    <div class="trip-meta">✅ Completed | Total: ${getSymbol()}${total.toFixed(2)}</div>
-                                </div>
-                                <button class="btn btn-primary btn-small" onclick="selectTrip(${t.id})">View</button>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-
-            document.getElementById('completed-list').innerHTML = html;
-        }
-
-        function renderSandeepExpenses() {
-            let totalPaid = 0;
-            let totalOwes = 0;
-            let expensesList = [];
-
-            trips.forEach(trip => {
-                if (trip.status === 'active' || trip.status === 'completed') {
-                    const total = trip.expenses.reduce((sum, e) => sum + e.amount, 0);
-                    const perPerson = trip.members.length > 0 ? total / trip.members.length : 0;
-                    
-                    const sandeepPaid = trip.expenses
-                        .filter(e => e.paidBy === OWNER)
-                        .reduce((sum, e) => sum + e.amount, 0);
-                    
-                    totalPaid += sandeepPaid;
-                    totalOwes += perPerson;
-                    
-                    if (sandeepPaid > 0 || perPerson > 0) {
-                        expensesList.push({
-                            tripName: trip.name,
-                            paid: sandeepPaid,
-                            owes: perPerson,
-                            status: trip.status
-                        });
-                    }
+            if (confirm('End this trip?')) {
+                const trip = state.data.trips.find(t => t.id === id);
+                if (trip) {
+                    trip.status = 'completed';
+                    saveData();
+                    switchTab('trips');
                 }
-            });
-
-            const netBalance = totalPaid - totalOwes;
-
-            let html = `
-                <div class="card">
-                    <h2 class="section-title">👤 Your Overall Expenses</h2>
-                    <div class="summary-grid">
-                        <div class="summary-card">
-                            <div class="summary-label">Total Paid</div>
-                            <div class="summary-amount">${getSymbol()}${totalPaid.toFixed(2)}</div>
-                        </div>
-                        <div class="summary-card secondary">
-                            <div class="summary-label">Total Owes</div>
-                            <div class="summary-amount">${getSymbol()}${totalOwes.toFixed(2)}</div>
-                        </div>
-                        <div class="summary-card ${netBalance < 0 ? 'tertiary' : 'secondary'}">
-                            <div class="summary-label">${netBalance < 0 ? 'You Receive' : 'You Pay'}</div>
-                            <div class="summary-amount">${getSymbol()}${Math.abs(netBalance).toFixed(2)}</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            if (expensesList.length > 0) {
-                html += `
-                    <div class="card">
-                        <h3 class="section-title">📋 Trip-wise Breakdown</h3>
-                        ${expensesList.map(e => `
-                            <div class="trip-item">
-                                <div class="trip-name">${e.tripName}</div>
-                                <div class="trip-meta">${e.status === 'completed' ? '✅ Completed' : '🟢 Active'}</div>
-                                <div style="font-size: 12px; margin-top: 8px;">
-                                    <div>💰 You Paid: ${getSymbol()}${e.paid.toFixed(2)}</div>
-                                    <div>💳 Your Share: ${getSymbol()}${e.owes.toFixed(2)}</div>
-                                    <div style="font-weight: 700; margin-top: 4px; padding: 6px; background: ${e.paid > e.owes ? '#d4edda' : '#f8d7da'}; border-radius: 4px; color: ${e.paid > e.owes ? '#155724' : '#721c24'};">
-                                        ${e.paid > e.owes ? '✓ Receive: ' : '✗ Pay: '}${getSymbol()}${Math.abs(e.paid - e.owes).toFixed(2)}
-                                    </div>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-            } else {
-                html += '<div class="empty">No trip expenses yet</div>';
-            }
-
-            document.getElementById('sandeep-content').innerHTML = html;
-        }
-
-        function renderAll() {
-            renderActiveTrips();
-            renderCompletedTrips();
-            renderSandeepExpenses();
-            if (selectedTripId && trips.find(t => t.id === selectedTripId)) {
-                renderTripDetail();
             }
         }
 
-        document.getElementById('currency').value = currency;
-        renderAll();
+        function addLending() {
+            const person = validateText(document.getElementById('lend-person').value);
+            const amt = validateAmount(document.getElementById('lend-amt').value);
+            const type = document.getElementById('lend-type').value;
+            const date = document.getElementById('lend-date').value;
+            const due = document.getElementById('lend-due').value;
+            
+            if (!person || !amt || !date || !due) {
+                alert('Please fill all fields with valid values');
+                return;
+            }
+            
+            if (new Date(due) < new Date(date)) {
+                alert('Due date must be after given date');
+                return;
+            }
+            
+            state.data.lending.push({id: Date.now(), personName: person, amount: roundTwoDecimals(amt), type, givenDate: date, dueDate: due, isSettled: false});
+            saveData();
+            state.showLendingForm = false;
+            render();
+        }
+
+        function settleLending(id) {
+            if (confirm('Mark as settled?')) {
+                const lending = state.data.lending.find(l => l.id === id);
+                if (lending) {
+                    lending.isSettled = true;
+                    lending.settledDate = new Date().toISOString();
+                    saveData();
+                    render();
+                }
+            }
+        }
+
+        function deleteLending(id) {
+            if (confirm('Delete record?')) {
+                state.data.lending = state.data.lending.filter(l => l.id !== id);
+                saveData();
+                render();
+            }
+        }
+
+        // Initialize
+        document.getElementById('currency').value = state.currency;
+        document.getElementById('month-selector').value = state.currentMonth;
+        render();
     </script>
 </body>
 </html>

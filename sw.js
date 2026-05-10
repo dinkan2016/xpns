@@ -1,50 +1,30 @@
-const CACHE_NAME = 'expenseflow-v1';
+const CACHE_NAME = 'expense-manager-v1';
 const urlsToCache = [
   '/',
-  '/index.html'
+  '/expns/',
+  '/expns/index.html',
+  '/expns/manifest.json',
+  '/expns/sw.js'
 ];
 
-// Install event - cache essential files
+// Install event
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(urlsToCache).catch(() => {
-        console.log('Cache addAll failed, continuing anyway');
-      });
-    }).then(() => self.skipWaiting())
-  );
-});
-
-// Fetch event - serve from cache, fallback to network
-self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request).then(response => {
-      if (response) {
-        return response;
-      }
-      
-      return fetch(event.request).then(response => {
-        // Don't cache non-successful responses
-        if (!response || response.status !== 200 || response.type !== 'basic') {
-          return response;
-        }
-
-        // Clone the response
-        const responseToCache = response.clone();
-        caches.open(CACHE_NAME).then(cache => {
-          cache.put(event.request, responseToCache);
+    caches.open(CACHE_NAME)
+      .then(cache => {
+        return cache.addAll(urlsToCache).catch(err => {
+          console.log('Cache addAll error:', err);
+          return Promise.resolve();
         });
-
-        return response;
-      });
-    }).catch(() => {
-      // Return cached version if network fails
-      return caches.match('/index.html');
-    })
+      })
+      .catch(err => {
+        console.log('Cache open error:', err);
+      })
   );
+  self.skipWaiting();
 });
 
-// Activate event - clean up old caches
+// Activate event
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(cacheNames => {
@@ -55,6 +35,32 @@ self.addEventListener('activate', event => {
           }
         })
       );
-    }).then(() => self.clients.claim())
+    })
+  );
+  self.clients.claim();
+});
+
+// Fetch event - Network first, fallback to cache
+self.addEventListener('fetch', event => {
+  if (event.request.method !== 'GET') {
+    return;
+  }
+
+  event.respondWith(
+    fetch(event.request)
+      .then(response => {
+        // Cache successful responses
+        if (response.ok) {
+          const cache = caches.open(CACHE_NAME);
+          cache.then(c => c.put(event.request, response.clone()));
+        }
+        return response;
+      })
+      .catch(() => {
+        // Fallback to cache when offline
+        return caches.match(event.request)
+          .then(response => response || new Response('Offline - Data not available', { status: 503 }))
+          .catch(() => new Response('Network error', { status: 503 }));
+      })
   );
 });
