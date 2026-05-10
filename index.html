@@ -419,7 +419,7 @@
                 const balance = paid - owes;
                 html += `<div class="person-item"><div class="person-name">${m} ${m === OWNER ? '(You)' : ''}</div>
                     <div class="person-stat">Paid: ${getSymbol()}${roundTwoDecimals(paid).toFixed(2)} | Owes: ${getSymbol()}${roundTwoDecimals(owes).toFixed(2)}</div>
-                    <div class="balance ${balance < 0 ? 'balance-negative' : 'balance-positive'}">${balance < 0 ? '✓ Receive: ' : '✗ Pay: '}${getSymbol()}${roundTwoDecimals(Math.abs(balance)).toFixed(2)}</div></div>`;
+                    <div class="balance ${balance > 0 ? 'balance-negative' : 'balance-positive'}">${balance > 0 ? '✓ Receive: ' : '✗ Pay: '}${getSymbol()}${roundTwoDecimals(Math.abs(balance)).toFixed(2)}</div></div>`;
             });
             html += `</div>`;
             html += `<button class="btn btn-success" onclick="endTrip(${id})" style="margin-top: 12px;">End Trip</button>`;
