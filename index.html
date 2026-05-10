@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#667eea">
+    <title>ExpenseFlow Ultimate - Complete Expense Management</title>
+    <link rel="manifest" href="manifest.json">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; width: 100%; }
+        body { font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; background: #f8f9fa; overflow-x: hidden; }
+        .app-container { min-height: 100vh; background-color: #f8f9fa; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; padding-top: 40px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .header-content { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; gap: 15px; flex-wrap: wrap; }
+        .title-section { display: flex; align-items: center; gap: 15px; }
+        .icon-circle { width: 60px; height: 60px; border-radius: 50%; background-color: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 32px; }
+        .title-text h1 { font-size: 28px; font-weight: 700; margin: 0; }
+        .title-text p { font-size: 12px; opacity: 0.9; margin: 2px 0 0 0; }
+        .tabs { display: flex; gap: 0; border-bottom: 2px solid rgba(255,255,255,0.3); margin-top: 20px; flex-wrap: wrap; }
+        .tab { padding: 12px 20px; background: none; border: none; color: white; cursor: pointer; font-weight: 600; font-size: 14px; border-bottom: 3px solid transparent; transition: all 0.3s; }
+        .tab.active { border-bottom: 3px solid white; background: rgba(255,255,255,0.1); }
+        .main-content { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .card { background-color: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; }
+        .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .summary-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3); }
+        .summary-card.secondary { background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%); }
+        .summary-card.tertiary { background: linear-gradient(135deg, #FF6B6B 0%, #FF5252 100%); }
+        .summary-card.quaternary { background: linear-gradient(135deg, #FFD93D 0%, #FFA502 100%); }
+        .summary-label { font-size: 12px; opacity: 0.9; margin-bottom: 8px; text-transform: uppercase; }
+        .summary-amount { font-size: 28px; font-weight: 700; }
+        .section-title { font-size: 20px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+        .form-group { margin-bottom: 16px; }
+        .label { display: block; font-weight: 600; font-size: 14px; margin-bottom: 8px; color: #333; }
+        .input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; font-family: inherit; box-sizing: border-box; }
+        .input:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1); }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .btn { padding: 10px 16px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 14px; transition: all 0.2s; }
+        .btn-primary { background-color: #667eea; color: white; }
+        .btn-primary:hover { background-color: #5568d3; }
+        .btn-secondary { background-color: #4ECDC4; color: white; }
+        .btn-danger { background-color: #FF6B6B; color: white; }
+        .btn-success { background-color: #6BCF7F; color: white; }
+        .btn-small { padding: 6px 12px; font-size: 12px; }
+        .member-input-section { background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 16px; }
+        .member-list { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+        .member-chip { background: white; padding: 10px 12px; border-radius: 20px; border: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
+        .member-chip .remove-btn { background: #FF6B6B; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+        .trip-item { background: #f9f9f9; padding: 16px; border-radius: 8px; margin-bottom: 16px; border-left: 4px solid #667eea; }
+        .trip-item-title { font-weight: 700; font-size: 16px; margin-bottom: 8px; }
+        .trip-item-details { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; font-size: 14px; }
+        .detail-row { display: flex; justify-content: space-between; }
+        .split-section { background: #f0f7ff; padding: 16px; border-radius: 8px; margin-top: 12px; }
+        .split-title { font-weight: 700; margin-bottom: 12px; color: #667eea; }
+        .split-item { display: flex; justify-content: space-between; padding: 10px; background: white; border-radius: 6px; margin-bottom: 8px; font-size: 14px; }
+        .split-amount { font-weight: 700; color: #4ECDC4; }
+        .settlement-msg { background: #e8f5e9; padding: 10px; border-radius: 6px; font-size: 13px; color: #2e7d32; margin-top: 10px; border-left: 3px solid #4CAF50; }
+        .whatsapp-btn { background: #25D366; color: white; padding: 10px 14px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 14px; }
+        .whatsapp-btn:hover { background: #20ba5a; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .empty-state { text-align: center; padding: 40px 20px; color: #999; }
+        .chart-container { position: relative; height: 300px; margin-bottom: 30px; }
+        .expense-source { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; padding: 12px; background: #f9f9f9; border-radius: 8px; }
+        .source-item { display: flex; justify-content: space-between; align-items: center; }
+        .source-label { font-weight: 600; color: #333; }
+        .source-amount { font-weight: 700; font-size: 18px; }
+        .personal-expense-section { background: #fff3cd; padding: 12px; border-radius: 8px; margin: 12px 0; border-left: 4px solid #ffc107; }
+        .checkbox-label { display: flex; align-items: center; gap: 8px; font-weight: 500; cursor: pointer; }
+        .checkbox { cursor: pointer; width: 16px; height: 16px; }
+        .action-buttons { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+        .settlement-summary { background: #e3f2fd; padding: 16px; border-radius: 8px; margin-bottom: 20px; }
+        .settlement-item { display: flex; justify-content: space-between; padding: 10px; margin-bottom: 8px; background: white; border-radius: 6px; }
+        .lending-item { background: #f9f9f9; padding: 16px; border-radius: 8px; margin-bottom: 16px; border-left: 4px solid #FF6B6B; }
+        .lending-item.received { border-left-color: #6BCF7F; background: #f0f9f3; }
+        .lending-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px; }
+        .lending-name { font-weight: 700; font-size: 16px; }
+        .lending-amount { font-size: 18px; font-weight: 700; color: #FF6B6B; }
+        .lending-amount.received { color: #6BCF7F; }
+        .lending-meta { font-size: 13px; color: #999; margin-bottom: 12px; display: flex; gap: 12px; flex-wrap: wrap; }
+        .due-date { background: #fff3cd; color: #856404; padding: 4px 8px; border-radius: 4px; font-weight: 600; }
+        .overdue { background: #f8d7da; color: #721c24; }
+        .category-breakdown { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-top: 16px; }
+        .category-card { background: #f9f9f9; padding: 12px; border-radius: 8px; text-align: center; border-left: 4px solid #667eea; }
+        .category-icon { font-size: 24px; margin-bottom: 4px; }
+        .category-name { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+        .category-amount { font-size: 16px; font-weight: 700; color: #667eea; }
+        @media (max-width: 600px) {
+            .form-row { grid-template-columns: 1fr; }
+            .tab { padding: 10px 15px; font-size: 12px; }
+            .summary-grid { grid-template-columns: 1fr; }
+            .expense-source { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container" id="app"></div>
+
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+    <script>
+        const { useState, useEffect } = React;
+
+        function ExpenseFlowUltimate() {
+            const [activeTab, setActiveTab] = useState('dashboard');
+            const [trips, setTrips] = useState(() => JSON.parse(localStorage.getItem('trips')) || []);
+            const [lendings, setLendings] = useState(() => JSON.parse(localStorage.getItem('lendings')) || []);
+            const [personalExpenses, setPersonalExpenses] = useState(() => JSON.parse(localStorage.getItem('personal_expenses')) || []);
+            const [currency, setCurrency] = useState(() => localStorage.getItem('currency') || 'USD');
+            const [currentMonth, setCurrentMonth] = useState(new Date().toISOString().slice(0, 7));
+            const [showTripForm, setShowTripForm] = useState(false);
+            const [showPersonalForm, setShowPersonalForm] = useState(false);
+            const [showLendingForm, setShowLendingForm] = useState(false);
+
+            const [tripForm, setTripForm] = useState({
+                name: '',
+                date: new Date().toISOString().split('T')[0],
+                sharedAmount: '',
+                personalAmount: '',
+                paidBy: '',
+                members: [],
+                newMember: '',
+                category: 'Travel'
+            });
+
+            const [personalForm, setPersonalForm] = useState({
+                description: '',
+                amount: '',
+                date: new Date().toISOString().split('T')[0],
+                category: 'Food'
+            });
+
+            const [lendingForm, setLendingForm] = useState({
+                personName: '',
+                amount: '',
+                givenDate: new Date().toISOString().split('T')[0],
+                dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                type: 'lent',
+                category: 'Lending'
+            });
+
+            const currencySymbols = { USD: '$', EUR: '€', GBP: '£', INR: '₹', JPY: '¥', CAD: 'C$', AUD: 'A$', CHF: 'Fr' };
+            const getSymbol = () => currencySymbols[currency] || currency;
+
+            const tripCategories = ['Travel', 'Food', 'Adventure', 'Business', 'Family', 'Other'];
+            const personalCategories = ['Food', 'Transport', 'Entertainment', 'Shopping', 'Utilities', 'Health', 'Education', 'Other'];
+
+            useEffect(() => {
+                localStorage.setItem('trips', JSON.stringify(trips));
+            }, [trips]);
+
+            useEffect(() => {
+                localStorage.setItem('lendings', JSON.stringify(lendings));
+            }, [lendings]);
+
+            useEffect(() => {
+                localStorage.setItem('personal_expenses', JSON.stringify(personalExpenses));
+            }, [personalExpenses]);
+
+            useEffect(() => {
+                localStorage.setItem('currency', currency);
+            }, [currency]);
+
+            // Trip Functions
+            const addMemberToTrip = () => {
+                if (tripForm.newMember.trim()) {
+                    setTripForm({
+                        ...tripForm,
+                        members: [...tripForm.members, tripForm.newMember.trim()],
+                        newMember: ''
+                    });
+                }
+            };
+
+            const removeMemberFromTrip = (index) => {
+                setTripForm({
+                    ...tripForm,
+                    members: tripForm.members.filter((_, i) => i !== index)
+                });
+            };
+
+            const createTrip = (e) => {
+                e.preventDefault();
+                const shared = parseFloat(tripForm.sharedAmount || 0);
+                const personal = parseFloat(tripForm.personalAmount || 0);
+                if (tripForm.name && shared && tripForm.members.length > 0) {
+                    const sharePerPerson = shared / tripForm.members.length;
+                    const newTrip = {
+                        id: Date.now(),
+                        ...tripForm,
+                        sharedAmount: shared,
+                        personalAmount: personal,
+                        totalAmount: shared + personal,
+                        sharePerPerson: sharePerPerson,
+                        createdAt: new Date().toISOString()
+                    };
+                    setTrips([...trips, newTrip]);
+                    setTripForm({
+                        name: '',
+                        date: new Date().toISOString().split('T')[0],
+                        sharedAmount: '',
+                        personalAmount: '',
+                        paidBy: '',
+                        members: [],
+                        newMember: '',
+                        category: 'Travel'
+                    });
+                    setShowTripForm(false);
+                }
+            };
+
+            const deleteTrip = (id) => {
+                if (confirm('Delete this trip?')) setTrips(trips.filter(t => t.id !== id));
+            };
+
+            // Personal Expense Functions
+            const createPersonalExpense = (e) => {
+                e.preventDefault();
+                if (personalForm.description && personalForm.amount) {
+                    const newExpense = {
+                        id: Date.now(),
+                        ...personalForm,
+                        amount: parseFloat(personalForm.amount),
+                        createdAt: new Date().toISOString()
+                    };
+                    setPersonalExpenses([...personalExpenses, newExpense]);
+                    setPersonalForm({
+                        description: '',
+                        amount: '',
+                        date: new Date().toISOString().split('T')[0],
+                        category: 'Food'
+                    });
+                    setShowPersonalForm(false);
+                }
+            };
+
+            const deletePersonalExpense = (id) => {
+                if (confirm('Delete this expense?')) setPersonalExpenses(personalExpenses.filter(e => e.id !== id));
+            };
+
+            // Lending Functions
+            const createLending = (e) => {
+                e.preventDefault();
+                if (lendingForm.personName && lendingForm.amount) {
+                    const newLending = {
+                        id: Date.now(),
+                        ...lendingForm,
+                        amount: parseFloat(lendingForm.amount),
+                        isSettled: false,
+                        settledDate: null,
+                        createdAt: new Date().toISOString()
+                    };
+                    setLendings([...lendings, newLending]);
+                    setLendingForm({
+                        personName: '',
+                        amount: '',
+                        givenDate: new Date().toISOString().split('T')[0],
+                        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                        type: 'lent',
+                        category: 'Lending'
+                    });
+                    setShowLendingForm(false);
+                }
+            };
+
+            const markAsSettled = (id) => {
+                setLendings(lendings.map(l => l.id === id ? { ...l, isSettled: true, settledDate: new Date().toISOString() } : l));
+            };
+
+            const deleteLending = (id) => {
+                if (confirm('Delete this record?')) setLendings(lendings.filter(l => l.id !== id));
+            };
+
+            // Calculate Monthly Expenses
+            const getMonthlyExpenses = () => {
+                const monthStr = currentMonth;
+                
+                // Personal expenses
+                const monthlyPersonal = personalExpenses
+                    .filter(e => e.date.slice(0, 7) === monthStr)
+                    .reduce((sum, e) => sum + e.amount, 0);
+
+                // Trip shared amounts (only the user's share, not the whole amount)
+                const monthlyTripShares = trips
+                    .filter(t => t.date.slice(0, 7) === monthStr)
+                    .reduce((sum, t) => sum + t.sharePerPerson, 0);
+
+                // Trip personal amounts
+                const monthlyTripPersonal = trips
+                    .filter(t => t.date.slice(0, 7) === monthStr)
+                    .reduce((sum, t) => sum + (parseFloat(t.personalAmount || 0)), 0);
+
+                // Lending (only pending)
+                const monthlyLent = lendings
+                    .filter(l => l.givenDate.slice(0, 7) === monthStr && l.type === 'lent' && !l.isSettled)
+                    .reduce((sum, l) => sum + l.amount, 0);
+
+                const monthlyOwed = lendings
+                    .filter(l => l.givenDate.slice(0, 7) === monthStr && l.type === 'owe' && !l.isSettled)
+                    .reduce((sum, l) => sum + l.amount, 0);
+
+                return {
+                    personal: monthlyPersonal,
+                    tripShares: monthlyTripShares,
+                    tripPersonal: monthlyTripPersonal,
+                    lent: monthlyLent,
+                    owed: monthlyOwed,
+                    total: monthlyPersonal + monthlyTripShares + monthlyTripPersonal + monthlyOwed
+                };
+            };
+
+            // Get settlement summary
+            const getSettlementSummary = () => {
+                const pendingTrips = trips.filter(t => t.date.slice(0, 7) === currentMonth);
+                const settlements = {};
+                
+                pendingTrips.forEach(trip => {
+                    trip.members.forEach(member => {
+                        if (!settlements[member]) settlements[member] = 0;
+                        settlements[member] += trip.sharePerPerson;
+                    });
+                });
+
+                return Object.entries(settlements).map(([name, amount]) => ({ name, amount })).sort((a, b) => b.amount - a.amount);
+            };
+
+            // Get category breakdown
+            const getCategoryBreakdown = () => {
+                const monthStr = currentMonth;
+                const categories = {};
+
+                // Personal expenses
+                personalExpenses
+                    .filter(e => e.date.slice(0, 7) === monthStr)
+                    .forEach(e => {
+                        categories[e.category] = (categories[e.category] || 0) + e.amount;
+                    });
+
+                // Trip expenses
+                trips
+                    .filter(t => t.date.slice(0, 7) === monthStr)
+                    .forEach(t => {
+                        const catName = t.category + ' (Trip)';
+                        categories[catName] = (categories[catName] || 0) + t.sharePerPerson;
+                    });
+
+                return Object.entries(categories)
+                    .map(([name, amount]) => ({ name, amount }))
+                    .sort((a, b) => b.amount - a.amount);
+            };
+
+            const expenses = getMonthlyExpenses();
+            const settlements = getSettlementSummary();
+            const categoryBreakdown = getCategoryBreakdown();
+
+            const sendViaWhatsApp = (trip, member) => {
+                const message = `Hi ${member}! 👋\n\nFor the trip "${trip.name}", your share is: ${getSymbol()}${trip.sharePerPerson.toFixed(2)}\n\nPlease settle when convenient. Thanks! 💰`;
+                window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+            };
+
+            const sendLendingReminder = (lending) => {
+                const message = `Hi ${lending.personName}!\n\nReminder: You ${lending.type === 'lent' ? 'owe me' : 'lent me'} ${getSymbol()}${lending.amount.toFixed(2)}\nDue: ${new Date(lending.dueDate).toLocaleDateString()}\n\nThanks!`;
+                window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+            };
+
+            return React.createElement('div', { className: 'app-container' },
+                // Header
+                React.createElement('div', { className: 'header' },
+                    React.createElement('div', { className: 'header-content' },
+                        React.createElement('div', { className: 'title-section' },
+                            React.createElement('div', { className: 'icon-circle' }, '💰'),
+                            React.createElement('div', { className: 'title-text' },
+                                React.createElement('h1', null, 'ExpenseFlow Ultimate'),
+                                React.createElement('p', null, 'Complete Expense Management')
+                            )
+                        ),
+                        React.createElement('select', {
+                            value: currency,
+                            onChange: (e) => setCurrency(e.target.value),
+                            style: { padding: '8px 12px', borderRadius: '8px', border: 'none', backgroundColor: 'rgba(255,255,255,0.2)', color: 'white', fontWeight: '600', cursor: 'pointer' }
+                        },
+                            ['USD', 'EUR', 'GBP', 'INR', 'JPY', 'CAD', 'AUD', 'CHF'].map(c => React.createElement('option', { key: c, value: c }, c))
+                        )
+                    ),
+                    React.createElement('div', { className: 'tabs' },
+                        React.createElement('button', { className: 'tab ' + (activeTab === 'dashboard' ? 'active' : ''), onClick: () => setActiveTab('dashboard') }, '📊 Dashboard'),
+                        React.createElement('button', { className: 'tab ' + (activeTab === 'trips' ? 'active' : ''), onClick: () => setActiveTab('trips') }, '✈️ Trips'),
+                        React.createElement('button', { className: 'tab ' + (activeTab === 'personal' ? 'active' : ''), onClick: () => setActiveTab('personal') }, '💳 Personal'),
+                        React.createElement('button', { className: 'tab ' + (activeTab === 'lending' ? 'active' : ''), onClick: () => setActiveTab('lending') }, '💸 Lending')
+                    )
+                ),
+
+                // Main Content
+                React.createElement('div', { className: 'main-content' },
+                    // Dashboard Tab
+                    React.createElement('div', { className: 'tab-content ' + (activeTab === 'dashboard' ? 'active' : '') },
+                        React.createElement('div', null,
+                            React.createElement('div', { style: { marginBottom: '20px' } },
+                                React.createElement('label', { className: 'label' }, '📅 View Month:'),
+                                React.createElement('input', {
+                                    type: 'month',
+                                    value: currentMonth,
+                                    onChange: (e) => setCurrentMonth(e.target.value),
+                                    className: 'input',
+                                    style: { maxWidth: '200px' }
+                                })
+                            ),
+
+                            React.createElement('div', { className: 'summary-grid' },
+                                React.createElement('div', { className: 'summary-card' },
+                                    React.createElement('div', { className: 'summary-label' }, '💰 Total Monthly Expense'),
+                                    React.createElement('div', { className: 'summary-amount' }, getSymbol() + expenses.total.toFixed(2))
+                                ),
+                                React.createElement('div', { className: 'summary-card secondary' },
+                                    React.createElement('div', { className: 'summary-label' }, '🏠 Personal Expenses'),
+                                    React.createElement('div', { className: 'summary-amount' }, getSymbol() + (expenses.personal + expenses.tripPersonal).toFixed(2))
+                                ),
+                                React.createElement('div', { className: 'summary-card tertiary' },
+                                    React.createElement('div', { className: 'summary-label' }, '✈️ Trip Shares'),
+                                    React.createElement('div', { className: 'summary-amount' }, getSymbol() + expenses.tripShares.toFixed(2))
+                                ),
+                                React.createElement('div', { className: 'summary-card quaternary' },
+                                    React.createElement('div', { className: 'summary-label' }, '💸 Lending'),
+                                    React.createElement('div', { className: 'summary-amount' }, getSymbol() + (expenses.owed - expenses.lent).toFixed(2))
+                                )
+                            ),
+
+                            React.createElement('div', { className: 'card' },
+                                React.createElement('h3', { className: 'section-title' }, '📊 Expense Breakdown'),
+                                React.createElement('div', { className: 'expense-source' },
+                                    React.createElement('div', { className: 'source-item' },
+                                        React.createElement('span', { className: 'source-label' }, '🏠 Personal'),
+                                        React.createElement('span', { className: 'source-amount' }, getSymbol() + (expenses.personal + expenses.tripPersonal).toFixed(2))
+                                    ),
+                                    React.createElement('div', { className: 'source-item' },
+                                        React.createElement('span', { className: 'source-label' }, '✈️ Trip Shares'),
+                                        React.createElement('span', { className: 'source-amount' }, getSymbol() + expenses.tripShares.toFixed(2))
+                                    ),
+                                    React.createElement('div', { className: 'source-item' },
+                                        React.createElement('span', { className: 'source-label' }, '💳 You Owe'),
+                                        React.createElement('span', { className: 'source-amount', style: { color: '#FF6B6B' } }, getSymbol() + expenses.owed.toFixed(2))
+                                    ),
+                                    React.createElement('div', { className: 'source-item' },
+                                        React.createElement('span', { className: 'source-label' }, '💰 Lent Out'),
+                                        React.createElement('span', { className: 'source-amount', style: { color: '#4ECDC4' } }, getSymbol() + expenses.lent.toFixed(2))
+                                    )
+                                )
+                            ),
+
+                            settlements.length > 0 && React.createElement('div', { className: 'card' },
+                                React.createElement('h3', { className: 'section-title' }, '📋 Who Owes You (This Month)'),
+                                React.createElement('div', { className: 'settlement-summary' },
+                                    settlements.map(s => React.createElement('div', { key: s.name, className: 'settlement-item' },
+                                        React.createElement('span', null, '👤 ' + s.name),
+                                        React.createElement('span', { style: { fontWeight: '700', color: '#667eea' } }, getSymbol() + s.amount.toFixed(2))
+                                    ))
+                                )
+                            ),
+
+                            categoryBreakdown.length > 0 && React.createElement('div', { className: 'card' },
+                                React.createElement('h3', { className: 'section-title' }, '📈 By Category'),
+                                React.createElement('div', { className: 'category-breakdown' },
+                                    categoryBreakdown.slice(0, 6).map(cat => React.createElement('div', { key: cat.name, className: 'category-card' },
+                                        React.createElement('div', { className: 'category-name' }, cat.name),
+                                        React.createElement('div', { className: 'category-amount' }, getSymbol() + cat.amount.toFixed(2))
+                                    ))
+                                )
+                            )
+                        )
+                    ),
+
+                    // Trips Tab
+                    React.createElement('div', { className: 'tab-content ' + (activeTab === 'trips' ? 'active' : '') },
+                        React.createElement('div', null,
+                            React.createElement('button', { className: 'btn btn-secondary', onClick: () => setShowTripForm(!showTripForm), style: { marginBottom: '20px', width: '100%' } }, showTripForm ? '❌ Cancel' : '➕ Add Trip'),
+                            
+                            showTripForm && React.createElement('div', { className: 'card' },
+                                React.createElement('form', { onSubmit: createTrip },
+                                    React.createElement('div', { className: 'form-group' },
+                                        React.createElement('label', { className: 'label' }, 'Trip Name'),
+                                        React.createElement('input', { type: 'text', className: 'input', placeholder: 'Weekend Trip', value: tripForm.name, onChange: (e) => setTripForm({ ...tripForm, name: e.target.value }) })
+                                    ),
+                                    React.createElement('div', { className: 'form-row' },
+                                        React.createElement('div', { className: 'form-group' },
+                                            React.createElement('label', { className: 'label' }, 'Date'),
+                                            React.createElement('input', { type: 'date', className: 'input', value: tripForm.date, onChange: (e) => setTripForm({ ...tripForm, date: e.target.value }) })
+                                        ),
+                                        React.createElement('div', { className: 'form-group' },
+                                            React.createElement('label', { className: 'label' }, 'Category'),
+                                            React.createElement('select', { className: 'input', value: tripForm.category, onChange: (e) => setTripForm({ ...tripForm, category: e.target.value }) },
+                                                tripCategories.map(c => React.createElement('option', { key: c, value: c }, c))
+                                            )
+                                        )
+                                    ),
+                                    React.createElement('div', { className: 'form-row' },
+                                        React.createElement('div', { className: 'form-group' },
+                                            React.createElement('label', { className: 'label' }, '👥 Shared Amount (Split)'),
+                                            React.createElement('input', { type: 'number', className: 'input', placeholder: '0.00', step: '0.01', value: tripForm.sharedAmount, onChange: (e) => setTripForm({ ...tripForm, sharedAmount: e.target.value }) })
+                                        ),
+                                        React.createElement('div', { className: 'form-group' },
+                                            React.createElement('label', { className: 'label' }, '🏠 Your Personal Amount'),
+                                            React.createElement('input', { type: 'number', className: 'input', placeholder: '0.00', step: '0.01', value: tripForm.personalAmount, onChange: (e) => setTripForm({ ...tripForm, personalAmount: e.target.value }) })
+                                        )
+                                    ),
+                                    React.createElement('div', { className: 'personal-expense-section' },
+                                        React.createElement('strong', null, '💡 Personal Amount:'),
+                                        React.createElement('p', { style: { marginTop: '8px', fontSize: '13px' } }, 'This is YOUR personal expense in the trip. It will be added to your monthly expense but NOT split among members.')
+                                    ),
+                                    React.createElement('div', { className: 'form-group' },
+                                        React.createElement('label', { className: 'label' }, 'Paid By'),
+                                        React.createElement('input', { type: 'text', className: 'input', placeholder: 'Your name', value: tripForm.paidBy, onChange: (e) => setTripForm({ ...tripForm, paidBy: e.target.value }) })
+                                    ),
+                                    React.createElement('div', { className: 'member-input-section' },
+                                        React.createElement('label', { className: 'label', style: { marginBottom: '12px' } }, '👥 Add Members'),
+                                        React.createElement('div', { style: { display: 'flex', gap: '8px' } },
+                                            React.createElement('input', { type: 'text', className: 'input', placeholder: 'Member name', value: tripForm.newMember, onChange: (e) => setTripForm({ ...tripForm, newMember: e.target.value }), onKeyPress: (e) => { if (e.key === 'Enter') { e.preventDefault(); addMemberToTrip(); } }, style: { flex: 1 } }),
+                                            React.createElement('button', { type: 'button', className: 'btn btn-primary btn-small', onClick: addMemberToTrip }, 'Add')
+                                        ),
+                                        React.createElement('div', { className: 'member-list' },
+                                            tripForm.members.map((member, idx) => React.createElement('div', { key: idx, className: 'member-chip' }, member, React.createElement('button', { type: 'button', className: 'remove-btn', onClick: () => removeMemberFromTrip(idx) }, '✕')))
+                                        )
+                                    ),
+                                    tripForm.sharedAmount && tripForm.members.length > 0 && React.createElement('div', { className: 'settlement-msg' },
+                                        '💡 Per person share: ' + getSymbol() + (parseFloat(tripForm.sharedAmount) / tripForm.members.length).toFixed(2) + ' | Your total: ' + getSymbol() + (parseFloat(tripForm.sharedAmount) / tripForm.members.length + parseFloat(tripForm.personalAmount || 0)).toFixed(2)
+                                    ),
+                                    React.createElement('button', { type: 'submit', className: 'btn btn-success', style: { width: '100%', marginTop: '16px' } }, '✓ Create Trip')
+                                )
+                            ),
+
+                            trips.filter(t => t.date.slice(0, 7) === currentMonth).length === 0 ? React.createElement('div', { className: 'empty-state' }, React.createElement('p', null, 'No trips this month')) : React.createElement('div', null,
+                                React.createElement('h3', { className: 'section-title' }, 'Trips This Month'),
+                                trips.filter(t => t.date.slice(0, 7) === currentMonth).map(trip => React.createElement('div', { key: trip.id, className: 'trip-item' },
+                                    React.createElement('div', { className: 'trip-item-title' }, '✈️ ' + trip.name),
+                                    React.createElement('div', { className: 'trip-item-details' },
+                                        React.createElement('div', { className: 'detail-row' }, React.createElement('span', null, 'Shared:'), React.createElement('span', { style: { fontWeight: '600' } }, getSymbol() + trip.sharedAmount.toFixed(2))),
+                                        React.createElement('div', { className: 'detail-row' }, React.createElement('span', null, 'Your Personal:'), React.createElement('span', { style: { fontWeight: '600', color: '#FF6B6B' } }, getSymbol() + trip.personalAmount.toFixed(2))),
+                                        React.createElement('div', { className: 'detail-row' }, React.createElement('span', null, 'Your Share:'), React.createElement('span', { style: { fontWeight: '600', color: '#4ECDC4' } }, getSymbol() + trip.sharePerPerson.toFixed(2))),
+                                        React.createElement('div', { className: 'detail-row' }, React.createElement('span', null, 'Your Total:'), React.createElement('span', { style: { fontWeight: '600', color: '#667eea' } }, getSymbol() + (trip.sharePerPerson + trip.personalAmount).toFixed(2)))
+                                    ),
+                                    React.createElement('div', { className: 'split-section' },
+                                        React.createElement('div', { className: 'split-title' }, '💵 Who Owes (' + trip.members.length + ' people):'),
+                                        trip.members.map(m => React.createElement('div', { key: m, className: 'split-item' }, React.createElement('span', null, '👤 ' + m), React.createElement('span', { className: 'split-amount' }, getSymbol() + trip.sharePerPerson.toFixed(2))))
+                                    ),
+                                    React.createElement('div', { className: 'action-buttons' },
+                                        trip.members.map(m => React.createElement('button', { key: m, className: 'whatsapp-btn', onClick: () => sendViaWhatsApp(trip, m) }, '💬 ' + m.split(' ')[0]))
+                                    ),
+                                    React.createElement('button', { className: 'btn btn-danger btn-small', onClick: () => deleteTrip(trip.id), style: { marginTop: '12px' } }, '🗑️ Delete')
+                                ))
+                            )
+                        )
+                    ),
+
+                    // Personal Tab
+                    React.createElement('div', { className: 'tab-content ' + (activeTab === 'personal' ? 'active' : '') },
+                        React.createElement('div', null,
+                            React.createElement('button', { className: 'btn btn-primary', onClick: () => setShowPersonalForm(!showPersonalForm), style: { marginBottom: '20px', width: '100%' } }, showPersonalForm ? '❌ Cancel' : '➕ Add Expense'),
+                            
+                            showPersonalForm && React.createElement('div', { className: 'card' },
+                                React.createElement('form', { onSubmit: createPersonalExpense },
+                                    React.createElement('div', { className: 'form-group' },
+                                        React.createElement('label', { className: 'label' }, 'Description'),
+                                        React.createElement('input', { type: 'text', className: 'input', placeholder: 'What did you spend on?', value: personalForm.description, onChange: (e) => setPersonalForm({ ...personalForm, description: e.target.value }) })
+                                    ),
+                                    React.createElement('div', { className: 'form-row' },
+                                        React.createElement('div', { className: 'form-group' },
+                                            React.createElement('label', { className: 'label' }, 'Amount'),
+                                            React.createElement('input', { type: 'number', className: 'input', placeholder: '0.00', step: '0.01', value: personalForm.amount, onChange: (e) => setPersonalForm({ ...personalForm, amount: e.target.value }) })
+                                        ),
+                                        React.createElement('div', { className: 'form-group' },
+                                            React.createElement('label', { className: 'label' }, 'Date'),
+                                            React.createElement('input', { type: 'date', className: 'input', value: personalForm.date, onChange: (e) => setPersonalForm({ ...personalForm, date: e.target.value }) })
+                                        )
+                                    ),
+                                    React.createElement('div', { className: 'form-group' },
+                                        React.createElement('label', { className: 'label' }, 'Category'),
+                                        React.createElement('select', { className: 'input', value: personalForm.category, onChange: (e) => setPersonalForm({ ...personalForm, category: e.target.value }) },
+                                            personalCategories.map(c => React.createElement('option', { key: c, value: c }, c))
+                                        )
+                                    ),
+                                    React.createElement('button', { type: 'submit', className: 'btn btn-success', style: { width: '100%' } }, '✓ Add')
+                                )
+                            ),
+
+                            personalExpenses.filter(e => e.date.slice(0, 7) === currentMonth).length === 0 ? React.createElement('div', { className: 'empty-state' }, React.createElement('p', null, 'No personal expenses this month')) : React.createElement('div', null,
+                                personalExpenses.filter(e => e.date.slice(0, 7) === currentMonth).sort((a, b) => new Date(b.date) - new Date(a.date)).map(expense => React.createElement('div', { key: expense.id, className: 'trip-item' },
+                                    React.createElement('div', { className: 'trip-item-title' }, '💳 ' + expense.description),
+                                    React.createElement('div', { className: 'trip-item-details' },
+                                        React.createElement('div', { className: 'detail-row' }, React.createElement('span', null, 'Amount:'), React.createElement('span', { style: { fontWeight: '600' } }, getSymbol() + expense.amount.toFixed(2))),
+                                        React.createElement('div', { className: 'detail-row' }, React.createElement('span', null, 'Date:'), React.createElement('span', { style: { fontWeight: '600' } }, new Date(expense.date).toLocaleDateString())),
+                                        React.createElement('div', { className: 'detail-row' }, React.createElement('span', null, 'Category:'), React.createElement('span', { style: { fontWeight: '600' } }, expense.category))
+                                    ),
+                                    React.createElement('button', { className: 'btn btn-danger btn-small', onClick: () => deletePersonalExpense(expense.id), style: { marginTop: '12px' } }, '🗑️ Delete')
+                                ))
+                            )
+                        )
+                    ),
+
+                    // Lending Tab
+                    React.createElement('div', { className: 'tab-content ' + (activeTab === 'lending' ? 'active' : '') },
+                        React.createElement('div', null,
+                            React.createElement('button', { className: 'btn btn-primary', onClick: () => setShowLendingForm(!showLendingForm), style: { marginBottom: '20px', width: '100%' } }, showLendingForm ? '❌ Cancel' : '➕ Add Lending'),
+                            
+                            showLendingForm && React.createElement('div', { className: 'card' },
+                                React.createElement('form', { onSubmit: createLending },
+                                    React.createElement('div', { className: 'form-group' },
+                                        React.createElement('label', { className: 'label' }, 'Person'),
+                                        React.createElement('input', { type: 'text', className: 'input', placeholder: 'Name', value: lendingForm.personName, onChange: (e) => setLendingForm({ ...lendingForm, personName: e.target.value }) })
+                                    ),
+                                    React.createElement('div', { className: 'form-row' },
+                                        React.createElement('div', { className: 'form-group' },
+                                            React.createElement('label', { className: 'label' }, 'Amount'),
+                                            React.createElement('input', { type: 'number', className: 'input', placeholder: '0.00', step: '0.01', value: lendingForm.amount, onChange: (e) => setLendingForm({ ...lendingForm, amount: e.target.value }) })
+                                        ),
+                                        React.createElement('div', { className: 'form-group' },
+                                            React.createElement('label', { className: 'label' }, 'Type'),
+                                            React.createElement('select', { className: 'input', value: lendingForm.type, onChange: (e) => setLendingForm({ ...lendingForm, type: e.target.value }) },
+                                                React.createElement('option', { value: 'lent' }, 'I Lent'),
+                                                React.createElement('option', { value: 'owe' }, 'I Owe')
+                                            )
+                                        )
+                                    ),
+                                    React.createElement('div', { className: 'form-row' },
+                                        React.createElement('div', { className: 'form-group' },
+                                            React.createElement('label', { className: 'label' }, 'Given Date'),
+                                            React.createElement('input', { type: 'date', className: 'input', value: lendingForm.givenDate, onChange: (e) => setLendingForm({ ...lendingForm, givenDate: e.target.value }) })
+                                        ),
+                                        React.createElement('div', { className: 'form-group' },
+                                            React.createElement('label', { className: 'label' }, 'Due Date'),
+                                            React.createElement('input', { type: 'date', className: 'input', value: lendingForm.dueDate, onChange: (e) => setLendingForm({ ...lendingForm, dueDate: e.target.value }) })
+                                        )
+                                    ),
+                                    React.createElement('button', { type: 'submit', className: 'btn btn-success', style: { width: '100%' } }, '✓ Add')
+                                )
+                            ),
+
+                            lendings.filter(l => !l.isSettled).length === 0 ? React.createElement('div', { className: 'empty-state' }, React.createElement('p', null, 'No pending lending records')) : React.createElement('div', null,
+                                lendings.filter(l => !l.isSettled).map(lending => React.createElement('div', { key: lending.id, className: 'lending-item' },
+                                    React.createElement('div', { className: 'lending-header' },
+                                        React.createElement('div', { className: 'lending-name' }, (lending.type === 'lent' ? '💰 ' : '💳 ') + lending.personName),
+                                        React.createElement('div', { className: 'lending-amount' }, getSymbol() + lending.amount.toFixed(2))
+                                    ),
+                                    React.createElement('div', { className: 'lending-meta' },
+                                        React.createElement('span', null, new Date(lending.givenDate).toLocaleDateString()),
+                                        React.createElement('span', { className: 'due-date' }, '📅 Due: ' + new Date(lending.dueDate).toLocaleDateString())
+                                    ),
+                                    React.createElement('div', { className: 'action-buttons' },
+                                        React.createElement('button', { className: 'whatsapp-btn', onClick: () => sendLendingReminder(lending) }, '📱 Remind'),
+                                        React.createElement('button', { className: 'btn btn-success btn-small', onClick: () => markAsSettled(lending.id) }, '✓ Settled'),
+                                        React.createElement('button', { className: 'btn btn-danger btn-small', onClick: () => deleteLending(lending.id) }, '🗑️')
+                                    )
+                                ))
+                            )
+                        )
+                    )
+                )
+            );
+        }
+
+        const container = document.getElementById('app');
+        const root = ReactDOM.createRoot(container);
+        root.render(React.createElement(ExpenseFlowUltimate));
+    </script>
+</body>
+</html>
