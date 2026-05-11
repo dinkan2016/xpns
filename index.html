@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#667eea">
-    <title>Complete Expense Tracker</title>
+    <title>Expense Tracker - Secure Local Version</title>
     <link rel="manifest" href="manifest.json">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -22,15 +22,20 @@
         .tabs { display: flex; gap: 0; border-bottom: 2px solid rgba(255,255,255,0.3); overflow-x: auto; }
         .tab { padding: 10px 12px; background: none; border: none; color: white; cursor: pointer; font-weight: 600; font-size: 12px; white-space: nowrap; border-bottom: 3px solid transparent; }
         .tab.active { border-bottom: 3px solid white; background: rgba(255,255,255,0.1); }
-        .main { max-width: 1000px; margin: 0 auto; padding: 20px; }
+        .main { max-width: 1200px; margin: 0 auto; padding: 20px; }
         .card { background: white; border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 16px; }
-        .btn { padding: 8px 12px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 12px; margin-right: 6px; margin-bottom: 6px; }
+        .alert { background: #fff3cd; border-left: 4px solid #ffc107; padding: 12px; border-radius: 6px; margin-bottom: 16px; }
+        .alert.error { background: #f8d7da; border-left-color: #f5222d; }
+        .alert.success { background: #d4edda; border-left-color: #52c41a; }
+        .alert.info { background: #d1ecf1; border-left-color: #17a2b8; }
+        .btn { padding: 8px 12px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 12px; margin-right: 6px; margin-bottom: 6px; transition: all 0.2s; }
         .btn-primary { background: #667eea; color: white; }
         .btn-secondary { background: #4ECDC4; color: white; }
         .btn-success { background: #6BCF7F; color: white; }
         .btn-danger { background: #FF6B6B; color: white; }
-        .btn-warning { background: #FFB84D; color: white; }
-        .btn:hover { opacity: 0.9; }
+        .btn-info { background: #1890ff; color: white; }
+        .btn-small { padding: 4px 8px; font-size: 11px; }
+        .btn:hover { opacity: 0.9; transform: translateY(-2px); }
         .form-group { margin-bottom: 12px; }
         .label { display: block; font-weight: 600; font-size: 12px; margin-bottom: 6px; }
         .input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 12px; }
@@ -48,20 +53,21 @@
         .item-meta { font-size: 11px; color: #999; margin-bottom: 6px; }
         .empty { text-align: center; padding: 30px 20px; color: #999; }
         .section-title { font-size: 16px; font-weight: 700; margin-bottom: 12px; }
-        .person-item { background: #f0f7ff; padding: 10px; border-radius: 6px; margin-bottom: 8px; border-left: 4px solid #667eea; }
-        .person-name { font-weight: 700; }
-        .person-stat { font-size: 12px; color: #999; }
-        .balance { padding: 6px; border-radius: 4px; margin-top: 6px; font-size: 12px; font-weight: 700; }
-        .balance-positive { background: #f8d7da; color: #721c24; }
-        .balance-negative { background: #d4edda; color: #155724; }
-        .comment-box { background: #f0f7ff; padding: 8px; border-radius: 6px; margin-top: 8px; font-size: 11px; border-left: 3px solid #667eea; }
-        .receipt-indicator { font-size: 11px; color: #4ECDC4; margin-top: 4px; }
-        .member-badge { display: inline-block; background: #e8f5e9; padding: 4px 8px; border-radius: 12px; font-size: 11px; margin: 2px; }
-        .member-badge.removable { cursor: pointer; }
-        .member-badge.removable:hover { background: #ffebee; }
+        .status-badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 10px; font-weight: 700; margin-top: 6px; }
+        .status-pending { background: #ffe5e5; color: #c41e3a; }
+        .status-synced { background: #d4edda; color: #155724; }
+        .backup-box { background: #f0f7ff; padding: 20px; border-radius: 10px; border-left: 4px solid #667eea; margin-bottom: 16px; }
+        .backup-box h3 { margin-bottom: 12px; color: #667eea; }
+        .backup-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+        .progress-bar { width: 100%; height: 8px; background: #e0e0e0; border-radius: 4px; margin-top: 6px; overflow: hidden; }
+        .progress-fill { height: 100%; background: #667eea; transition: width 0.3s; }
+        .backup-info { background: white; padding: 12px; border-radius: 6px; margin-top: 12px; font-size: 12px; border: 1px solid #ddd; }
+        .lending-subtab { transition: all 0.2s; }
+        .lending-subtab.active-subtab { background: #667eea !important; opacity: 1; }
         @media (max-width: 600px) {
             .form-row { grid-template-columns: 1fr; }
             .summary-grid { grid-template-columns: repeat(2, 1fr); }
+            .backup-buttons { grid-template-columns: 1fr; }
             .tab { padding: 8px 10px; font-size: 11px; }
         }
     </style>
@@ -73,12 +79,12 @@
                 <div class="title">
                     <div class="icon">💰</div>
                     <div class="title-text">
-                        <h1>Expense Manager</h1>
-                        <p>Complete Financial Tracking</p>
+                        <h1>Expense Tracker</h1>
+                        <p>Simple, Secure, and Local</p>
                     </div>
                 </div>
                 <div class="header-controls">
-                    <div class="header-info">👤 Sandeep</div>
+                    <div class="header-info" id="user-info">👤 Sandeep</div>
                     <input type="month" id="month-selector" onchange="changeMonth()">
                     <select id="currency" onchange="changeCurrency()">
                         <option value="INR">INR</option>
@@ -96,47 +102,249 @@
 
     <script>
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js')
-                .catch(err => console.log('SW registration failed:', err));
+            navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed:', err));
         }
 
+        // ============ CONSTANTS ============
         const OWNER = 'Sandeep';
         const symbols = { INR: '₹', USD: '$', EUR: '€', GBP: '£' };
         const expenseCategories = ['Food', 'Transport', 'Entertainment', 'Shopping', 'Utilities', 'Health', 'Education', 'Other'];
 
-        let state = {
-            data: {
-                personal: JSON.parse(localStorage.getItem('personal_expenses') || '[]').filter(e => e && e.id),
-                trips: JSON.parse(localStorage.getItem('trips_complete') || '[]').filter(t => t && t.id),
-                lending: JSON.parse(localStorage.getItem('lending_expenses') || '[]').filter(l => l && l.id)
-            },
-            currency: localStorage.getItem('currency') || 'INR',
-            currentMonth: new Date().toISOString().slice(0, 7),
-            activeTab: 'dashboard',
-            selectedTripId: null,
-            showPersonalForm: false,
-            showTripForm: false,
-            showLendingForm: false
-        };
-
-        function getSymbol() { return symbols[state.currency] || state.currency; }
-        function saveData() { 
-            localStorage.setItem('personal_expenses', JSON.stringify(state.data.personal));
-            localStorage.setItem('trips_complete', JSON.stringify(state.data.trips));
-            localStorage.setItem('lending_expenses', JSON.stringify(state.data.lending));
+        // ============ STATE MANAGEMENT ============
+        let state;
+        try {
+            state = {
+                data: {
+                    personal: JSON.parse(localStorage.getItem('personal_expenses') || '[]').filter(e => e && typeof e.id !== 'undefined'),
+                    trips: JSON.parse(localStorage.getItem('trips_complete') || '[]').filter(t => t && typeof t.id !== 'undefined'),
+                    lending: JSON.parse(localStorage.getItem('lending_expenses') || '[]').filter(l => l && typeof l.id !== 'undefined').map(l => ({...l, source: l.source || 'manual', status: l.status || 'confirmed'}))
+                },
+                currency: localStorage.getItem('currency') || 'INR',
+                currentMonth: new Date().toISOString().slice(0, 7),
+                activeTab: 'dashboard',
+                lendingSubTab: 'manual',
+                selectedTripId: null,
+                showPersonalForm: false,
+                showTripForm: false,
+                showLendingForm: false
+            };
+        } catch (err) {
+            console.error('Error loading saved data:', err);
+            // Reset to empty state if data is corrupted
+            state = {
+                data: {personal: [], trips: [], lending: []},
+                currency: 'INR',
+                currentMonth: new Date().toISOString().slice(0, 7),
+                activeTab: 'dashboard',
+                lendingSubTab: 'manual',
+                selectedTripId: null,
+                showPersonalForm: false,
+                showTripForm: false,
+                showLendingForm: false
+            };
+            showAlert('⚠️ Corrupted data detected. Starting fresh.', 'error');
         }
-        function changeMonth() { state.currentMonth = document.getElementById('month-selector').value; render(); }
-        function changeCurrency() { state.currency = document.getElementById('currency').value; localStorage.setItem('currency', state.currency); render(); }
-        function switchTab(tab) { state.activeTab = tab; state.selectedTripId = null; state.showPersonalForm = false; state.showTripForm = false; state.showLendingForm = false; render(); }
+
+        // ============ UTILITY FUNCTIONS ============
+        function getSymbol() { return symbols[state.currency] || state.currency || '₹'; }
+        
+        function saveData() { 
+            try {
+                localStorage.setItem('personal_expenses', JSON.stringify(state.data.personal));
+                localStorage.setItem('trips_complete', JSON.stringify(state.data.trips));
+                localStorage.setItem('lending_expenses', JSON.stringify(state.data.lending));
+            } catch (err) {
+                console.error('Storage error:', err);
+                showAlert('⚠️ Unable to save data. Storage may be full.', 'error');
+            }
+        }
+
+        function changeMonth() { 
+            const monthEl = document.getElementById('month-selector');
+            if (monthEl) state.currentMonth = monthEl.value;
+            render(); 
+        }
+
+        function changeCurrency() { 
+            const currencyEl = document.getElementById('currency');
+            if (currencyEl) {
+                state.currency = currencyEl.value;
+                localStorage.setItem('currency', state.currency);
+            }
+            render(); 
+        }
+        function switchTab(tab) { state.activeTab = tab; state.lendingSubTab = 'manual'; state.selectedTripId = null; state.showPersonalForm = false; state.showTripForm = false; state.showLendingForm = false; render(); }
+        function switchLendingSubTab(subTab) { state.lendingSubTab = subTab; render(); }
 
         function validateAmount(amt) { const p = parseFloat(amt); return !isNaN(p) && p > 0 ? p : null; }
         function validateText(t) { return t.trim().length > 0 ? t.trim() : null; }
         function safeDiv(n, d) { return d > 0 ? n / d : 0; }
         function roundTwoDecimals(n) { return isNaN(n) ? 0 : Math.round(n * 100) / 100; }
 
+        function showAlert(msg, type = 'info') { 
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.textContent = msg;
+            const main = document.getElementById('main-content');
+            if (main) main.insertBefore(alertDiv, main.firstChild);
+            setTimeout(() => alertDiv.remove(), 5000);
+        }
+
+        // ============ BACKUP/RESTORE ============
+        function exportToJSON() {
+            try {
+                const backup = {
+                    version: '2.5-secure',
+                    exportDate: new Date().toISOString(),
+                    data: state.data,
+                    currency: state.currency
+                };
+                const dataStr = JSON.stringify(backup, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `expense_backup_${new Date().toISOString().split('T')[0]}.json`;
+                link.click();
+                URL.revokeObjectURL(url);
+                showAlert('✓ Backup downloaded successfully', 'success');
+            } catch (err) {
+                console.error('Export error:', err);
+                showAlert('✗ Export failed', 'error');
+            }
+        }
+
+        function importFromJSON() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = (e) => {
+                try {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        try {
+                            const backup = JSON.parse(event.target.result);
+                            if (!backup.data) throw new Error('Invalid backup format');
+                            
+                            if (confirm('Import this backup?\n\nCurrent data will be merged with the backup.\n\nContinue?')) {
+                                state.data.personal = [...state.data.personal, ...backup.data.personal].filter((e, i, a) => a.findIndex(x => x.id === e.id) === i);
+                                state.data.trips = [...state.data.trips, ...backup.data.trips].filter((e, i, a) => a.findIndex(x => x.id === e.id) === i);
+                                state.data.lending = [...state.data.lending, ...backup.data.lending].filter((e, i, a) => a.findIndex(x => x.id === e.id) === i);
+                                if (backup.currency) state.currency = backup.currency;
+                                saveData();
+                                render();
+                                showAlert('✓ Backup imported successfully. Data merged!', 'success');
+                            }
+                        } catch (err) {
+                            console.error('Import error:', err);
+                            showAlert('✗ Invalid backup file', 'error');
+                        }
+                    };
+                    reader.readAsText(file);
+                } catch (err) {
+                    console.error('File error:', err);
+                    showAlert('✗ Failed to read file', 'error');
+                }
+            };
+            input.click();
+        }
+
+        function clearAllData() {
+            if (confirm('⚠️ WARNING: Delete ALL data?\n\nThis will permanently delete:\n- All expenses\n- All trips\n- All lending records\n\nThis action cannot be undone!\n\nAre you absolutely sure?')) {
+                if (confirm('Please confirm again by clicking OK')) {
+                    state.data = { personal: [], trips: [], lending: [] };
+                    saveData();
+                    render();
+                    showAlert('✓ All data deleted', 'success');
+                }
+            }
+        }
+
+        // ============ TRIP SETTLEMENTS ============
+        function generateTripSettlementLending(trip) {
+            if (!trip.expenses || trip.expenses.length === 0) return;
+            const total = trip.expenses.reduce((s,e) => s + (e.amount || 0), 0);
+            const perPerson = safeDiv(total, trip.members ? trip.members.length : 1);
+            const balances = {};
+            (trip.members || []).forEach(m => balances[m] = 0);
+            (trip.expenses || []).forEach(e => balances[e.paidBy] = (balances[e.paidBy] || 0) + (e.amount || 0));
+            const settlements = [];
+            Object.entries(balances).forEach(([person, paid]) => {
+                const owes = perPerson;
+                const balance = paid - owes;
+                if (balance > 0) {
+                    (trip.members || []).forEach(other => {
+                        if (other !== person && (balances[other] || 0) - owes < 0) {
+                            const amt = Math.min(Math.abs((balances[other] || 0) - owes), balance);
+                            if (amt > 0.01) settlements.push({person, other, amount: roundTwoDecimals(amt)});
+                        }
+                    });
+                }
+            });
+            settlements.forEach(s => {
+                state.data.lending.push({
+                    id: Date.now() + Math.random(),
+                    personName: s.other,
+                    amount: s.amount,
+                    type: 'lent',
+                    givenDate: trip.date,
+                    dueDate: trip.date,
+                    isSettled: false,
+                    settledDate: null,
+                    source: 'trip',
+                    status: 'pending',
+                    tripId: trip.id,
+                    tripName: trip.name,
+                    description: `${trip.name} - Settlement`
+                });
+                state.data.lending.push({
+                    id: Date.now() + Math.random() + 0.001,
+                    personName: s.person,
+                    amount: s.amount,
+                    type: 'owe',
+                    givenDate: trip.date,
+                    dueDate: trip.date,
+                    isSettled: false,
+                    settledDate: null,
+                    source: 'trip',
+                    status: 'pending',
+                    tripId: trip.id,
+                    tripName: trip.name,
+                    description: `${trip.name} - Settlement`
+                });
+            });
+        }
+
+        function confirmPaymentSent(lendingId) {
+            const lending = state.data.lending.find(l => l.id === lendingId);
+            if (!lending) return;
+            if (confirm('Confirm payment sent: ' + getSymbol() + roundTwoDecimals(lending.amount).toFixed(2) + '?')) {
+                lending.status = 'sent';
+                lending.sentOn = new Date().toISOString();
+                saveData();
+                render();
+            }
+        }
+
+        function acceptPayment(lendingId) {
+            const lending = state.data.lending.find(l => l.id === lendingId);
+            if (!lending) return;
+            if (confirm('Confirm payment received: ' + getSymbol() + roundTwoDecimals(lending.amount).toFixed(2) + '?')) {
+                lending.status = 'confirmed';
+                lending.acceptedOn = new Date().toISOString();
+                lending.isSettled = true;
+                lending.settledDate = new Date().toISOString();
+                saveData();
+                render();
+            }
+        }
+
+        // ============ RENDERING ============
         function renderTabs() {
-            const tabs = ['📊 Dashboard', '💳 Personal', '✈️ Trips', '💸 Lending', '👤 My Expenses'];
-            const tabKeys = ['dashboard', 'personal', 'trips', 'lending', 'sandeep'];
+            const tabs = ['📊 Dashboard', '💳 Personal', '✈️ Trips', '💸 Lending', '⚙️ Settings'];
+            const tabKeys = ['dashboard', 'personal', 'trips', 'lending', 'settings'];
             document.getElementById('tabs-container').innerHTML = tabs.map((t, i) => 
                 `<button class="tab ${state.activeTab === tabKeys[i] ? 'active' : ''}" onclick="switchTab('${tabKeys[i]}')">${t}</button>`
             ).join('');
@@ -144,43 +352,36 @@
 
         function render() {
             renderTabs();
-            document.getElementById('month-selector').value = state.currentMonth;
+            const monthEl = document.getElementById('month-selector');
+            const currencyEl = document.getElementById('currency');
+            if (monthEl) monthEl.value = state.currentMonth;
+            if (currencyEl) currencyEl.value = state.currency;
+            
             let content = '';
-            if (state.activeTab === 'dashboard') content = renderDashboard();
-            else if (state.activeTab === 'personal') content = renderPersonalTab();
-            else if (state.activeTab === 'trips') content = renderTripsTab();
-            else if (state.activeTab === 'lending') content = renderLendingTab();
-            else if (state.activeTab === 'sandeep') content = renderSandeepTab();
-            document.getElementById('main-content').innerHTML = content;
+            try {
+                if (state.activeTab === 'dashboard') content = renderDashboard();
+                else if (state.activeTab === 'personal') content = renderPersonalTab();
+                else if (state.activeTab === 'trips') content = renderTripsTab();
+                else if (state.activeTab === 'lending') content = renderLendingTab();
+                else if (state.activeTab === 'settings') content = renderSettingsTab();
+            } catch (err) {
+                console.error('Render error:', err);
+                content = `<div class="card"><div class="alert alert-error">Error rendering page. Please refresh.</div></div>`;
+            }
+            const mainContent = document.getElementById('main-content');
+            if (mainContent) mainContent.innerHTML = content;
         }
 
         function renderDashboard() {
             const monthExpenses = getMonthExpenses();
-            const activeTrips = state.data.trips.filter(t => t.status === 'active').length;
-            const activeLending = state.data.lending.filter(l => !l.isSettled).length;
-            
             let html = `<h2 class="section-title">📊 Dashboard - ${new Date(state.currentMonth + '-01').toLocaleDateString('en-US', {year: 'numeric', month: 'long'})}</h2>`;
+            
             html += `<div class="summary-grid">
                 <div class="summary-card"><div class="summary-label">Total Spent</div><div class="summary-amount">${getSymbol()}${roundTwoDecimals(monthExpenses.total).toFixed(2)}</div></div>
                 <div class="summary-card secondary"><div class="summary-label">Personal</div><div class="summary-amount">${getSymbol()}${roundTwoDecimals(monthExpenses.personal).toFixed(2)}</div></div>
                 <div class="summary-card tertiary"><div class="summary-label">Trips</div><div class="summary-amount">${getSymbol()}${roundTwoDecimals(monthExpenses.tripShares).toFixed(2)}</div></div>
-                <div class="summary-card quaternary"><div class="summary-label">Lending</div><div class="summary-amount">${getSymbol()}${roundTwoDecimals(Math.abs(monthExpenses.lendingBalance)).toFixed(2)}</div></div>
+                <div class="summary-card quaternary"><div class="summary-label">Balance</div><div class="summary-amount">${getSymbol()}${roundTwoDecimals(monthExpenses.balance).toFixed(2)}</div></div>
             </div>`;
-
-            html += `<div class="card"><h3 class="section-title">🎯 Quick Stats</h3>
-                <div style="display: grid; gap: 10px;">
-                    <div><strong>Active Trips:</strong> ${activeTrips}</div>
-                    <div><strong>Pending Lending:</strong> ${activeLending}</div>
-                    <div><strong>Overall Balance:</strong> ${getSymbol()}${roundTwoDecimals(monthExpenses.balance).toFixed(2)}</div>
-                </div>
-            </div>`;
-
-            const settlements = getMonthSettlements();
-            if (settlements.length > 0) {
-                html += `<div class="card"><h3 class="section-title">💸 Pending Settlements (Trips)</h3>`;
-                settlements.forEach(s => html += `<div class="person-item"><div class="person-name">${s.from} → ${s.to}</div><div class="person-stat">${getSymbol()}${roundTwoDecimals(s.amount).toFixed(2)}</div></div>`);
-                html += `</div>`;
-            }
 
             return html;
         }
@@ -197,9 +398,7 @@
                     </div>
                     <div class="form-row">
                         <div class="form-group"><label class="label">Date</label><input type="date" class="input" id="pers-date" value="${today}"></div>
-                        <div class="form-group"><label class="label">Receipt</label><input type="file" class="input" id="pers-receipt" accept="image/*"></div>
                     </div>
-                    <div class="form-group"><label class="label">Comments</label><textarea class="input" id="pers-comment" placeholder="Add any notes..."></textarea></div>
                     <button class="btn btn-success" onclick="addPersonal()" style="width: 100%;">✓ Add</button>
                 </div>`;
             }
@@ -207,10 +406,8 @@
             html += `<div class="card"><h3 class="section-title">📋 Expenses (${monthPersonal.length})</h3>`;
             html += monthPersonal.length === 0 ? '<div class="empty">No expenses</div>' : monthPersonal.map(e => {
                 let itemHtml = `<div class="item"><div class="item-header"><span>${e.description || 'Unnamed'}</span><span>${getSymbol()}${roundTwoDecimals(e.amount).toFixed(2)}</span></div>
-                    <div class="item-meta">🏷️ ${e.category || 'Other'} | 📅 ${e.date ? new Date(e.date).toLocaleDateString() : 'No date'}</div>`;
-                if (e.receipt) itemHtml += `<div class="receipt-indicator">📷 Receipt attached</div>`;
-                if (e.comment) itemHtml += `<div class="comment-box">💬 ${e.comment}</div>`;
-                itemHtml += `<div><button class="btn btn-warning btn-small" onclick="sharePersonalExpense(${e.id})">📱 Share</button><button class="btn btn-danger btn-small" onclick="deletePersonal(${e.id})">Delete</button></div></div>`;
+                    <div class="item-meta">🏷️ ${e.category || 'Other'} | 📅 ${e.date ? new Date(e.date).toLocaleDateString() : 'No date'}</div>
+                    <div><button class="btn btn-danger btn-small" onclick="deletePersonal(${e.id})">Delete</button></div></div>`;
                 return itemHtml;
             }).join('');
             html += `</div>`;
@@ -237,7 +434,6 @@
                 return `<div class="item"><div class="item-header"><span>${t.name || 'Unnamed'}</span><span>${getSymbol()}${roundTwoDecimals(tripTotal).toFixed(2)}</span></div>
                 <div class="item-meta">👥 ${t.members ? t.members.length : 0} | 💰 ${t.expenses ? t.expenses.length : 0} expenses</div>
                 <div><button class="btn btn-primary" onclick="selectTrip(${t.id})">View</button>
-                <button class="btn btn-warning" onclick="shareTrip(${t.id})">📱 Share</button>
                 <button class="btn btn-danger" onclick="deleteTrip(${t.id})">Delete</button></div></div>`
             }).join('');
             html += `</div>`;
@@ -245,93 +441,156 @@
         }
 
         function renderLendingTab() {
-            let html = `<button class="btn btn-primary" onclick="toggleLendingForm()" style="width: 100%; margin-bottom: 12px;">➕ Add Lending</button>`;
-            if (state.showLendingForm) {
-                const today = new Date().toISOString().split('T')[0];
-                const dueDate = new Date(Date.now() + 7*24*60*60*1000).toISOString().split('T')[0];
-                html += `<div class="card">
-                    <div class="form-group"><label class="label">Person</label><input type="text" class="input" id="lend-person" maxlength="50" placeholder="Name"></div>
-                    <div class="form-row">
-                        <div class="form-group"><label class="label">Amount</label><input type="number" class="input" id="lend-amt" min="0" step="0.01" placeholder="0.00"></div>
-                        <div class="form-group"><label class="label">Type</label><select class="input" id="lend-type"><option value="lent">I Lent</option><option value="owe">I Owe</option></select></div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group"><label class="label">Given Date</label><input type="date" class="input" id="lend-date" value="${today}"></div>
-                        <div class="form-group"><label class="label">Due Date</label><input type="date" class="input" id="lend-due" value="${dueDate}"></div>
-                    </div>
-                    <button class="btn btn-success" onclick="addLending()" style="width: 100%;">✓ Add</button>
-                </div>`;
+            let html = `<div class="card" style="background: #f9f9f9; padding: 12px;">
+                <button class="btn btn-secondary lending-subtab ${state.lendingSubTab === 'manual' ? 'active-subtab' : ''}" style="margin-right: 4px;" onclick="switchLendingSubTab('manual')">📝 Manual Lending</button>
+                <button class="btn btn-secondary lending-subtab ${state.lendingSubTab === 'trip' ? 'active-subtab' : ''}" onclick="switchLendingSubTab('trip')">✈️ Trip Settlements</button>
+            </div>`;
+
+            if (state.lendingSubTab === 'manual') {
+                html += `<button class="btn btn-primary" onclick="toggleLendingForm()" style="width: 100%; margin-bottom: 12px;">➕ Add Lending</button>`;
+                if (state.showLendingForm) {
+                    const today = new Date().toISOString().split('T')[0];
+                    html += `<div class="card">
+                        <div class="form-group"><label class="label">Person</label><input type="text" class="input" id="lend-person" maxlength="50" placeholder="Name"></div>
+                        <div class="form-row">
+                            <div class="form-group"><label class="label">Amount</label><input type="number" class="input" id="lend-amt" min="0" step="0.01" placeholder="0.00"></div>
+                            <div class="form-group"><label class="label">Type</label><select class="input" id="lend-type"><option value="lent">I Lent</option><option value="owe">I Owe</option></select></div>
+                        </div>
+                        <button class="btn btn-success" onclick="addLending()" style="width: 100%;">✓ Add</button>
+                    </div>`;
+                }
+                const manual = state.data.lending.filter(l => l.source === 'manual');
+                html += `<div class="card"><h3 class="section-title">💸 Lending (${manual.length})</h3>`;
+                html += manual.length === 0 ? '<div class="empty">No records</div>' : manual.map(l => 
+                    `<div class="item"><div class="item-header"><span>${l.personName || 'Unknown'}</span><span>${getSymbol()}${roundTwoDecimals(l.amount).toFixed(2)}</span></div>
+                    <div class="item-meta">${l.type === 'lent' ? '💰 Lent' : '💳 Owed'}</div>
+                    ${l.isSettled ? `<div class="status-badge status-synced">✅ Settled</div>` : `<div><button class="btn btn-success btn-small" onclick="settleLending(${l.id})">Settle</button></div>`}
+                    <button class="btn btn-danger btn-small" onclick="deleteLending(${l.id})">Delete</button></div>`
+                ).join('');
+                html += `</div>`;
+            } else {
+                const tripSettlements = state.data.lending.filter(l => l.source === 'trip');
+                const toBePaid = tripSettlements.filter(l => l.type === 'owe');
+                const toBeReceived = tripSettlements.filter(l => l.type === 'lent');
+
+                html += `<div class="card"><h3 class="section-title">💰 To Receive (${toBeReceived.length})</h3>`;
+                html += toBeReceived.length === 0 ? '<div class="empty">None</div>' : toBeReceived.map(l => {
+                    let statusColor = 'status-pending';
+                    let statusText = '🔴 Pending';
+                    if (l.status === 'confirmed') { statusColor = 'status-synced'; statusText = '✅ Confirmed'; }
+                    return `<div class="item">
+                        <div class="item-header"><span>${l.personName}</span><span>${getSymbol()}${roundTwoDecimals(l.amount).toFixed(2)}</span></div>
+                        <div class="item-meta">📍 ${l.tripName}</div>
+                        <div class="status-badge ${statusColor}">${statusText}</div>
+                        <div style="margin-top: 8px;">
+                            ${l.status !== 'confirmed' ? `<button class="btn btn-success btn-small" onclick="acceptPayment(${l.id})">Accept</button>` : ''}
+                        </div>
+                    </div>`;
+                }).join('');
+                html += `</div>`;
+
+                html += `<div class="card"><h3 class="section-title">💳 To Pay (${toBePaid.length})</h3>`;
+                html += toBePaid.length === 0 ? '<div class="empty">None</div>' : toBePaid.map(l => {
+                    let statusColor = 'status-pending';
+                    let statusText = '🔴 Pending';
+                    if (l.status === 'sent') { statusColor = 'status-pending'; statusText = '🟡 Sent'; }
+                    if (l.status === 'confirmed') { statusColor = 'status-synced'; statusText = '✅ Confirmed'; }
+                    return `<div class="item">
+                        <div class="item-header"><span>${l.personName}</span><span>${getSymbol()}${roundTwoDecimals(l.amount).toFixed(2)}</span></div>
+                        <div class="item-meta">📍 ${l.tripName}</div>
+                        <div class="status-badge ${statusColor}">${statusText}</div>
+                        <div style="margin-top: 8px;">
+                            ${l.status !== 'confirmed' ? `<button class="btn btn-success btn-small" onclick="confirmPaymentSent(${l.id})">Confirm Sent</button>` : ''}
+                        </div>
+                    </div>`;
+                }).join('');
+                html += `</div>`;
             }
-            const pending = state.data.lending.filter(l => !l.isSettled);
-            html += `<div class="card"><h3 class="section-title">💸 Pending (${pending.length})</h3>`;
-            html += pending.length === 0 ? '<div class="empty">No pending</div>' : pending.map(l => 
-                `<div class="item"><div class="item-header"><span>${l.personName || 'Unknown'}</span><span>${getSymbol()}${roundTwoDecimals(l.amount).toFixed(2)}</span></div>
-                <div class="item-meta">${l.type === 'lent' ? '💰 Lent' : '💳 Owed'} | Due: ${l.dueDate ? new Date(l.dueDate).toLocaleDateString() : 'No date'}</div>
-                <div><button class="btn btn-success" onclick="settleLending(${l.id})">Settle</button>
-                <button class="btn btn-warning" onclick="shareLending(${l.id})">📱 Share</button>
-                <button class="btn btn-danger" onclick="deleteLending(${l.id})">Delete</button></div></div>`
-            ).join('');
-            html += `</div>`;
             return html;
         }
 
-        function renderSandeepTab() {
-            let totalPaid = 0, totalOwes = 0;
-            state.data.personal.forEach(e => totalPaid += e.amount || 0);
-            state.data.trips.forEach(t => {
-                const tripTotal = t.expenses ? t.expenses.reduce((s,e)=>s + (e.amount || 0),0) : 0;
-                const share = safeDiv(tripTotal, t.members ? t.members.length : 1);
-                totalOwes += share;
-                const sandeepPaid = t.expenses ? t.expenses.filter(e => e.paidBy === OWNER).reduce((s,e)=>s + (e.amount || 0),0) : 0;
-                totalPaid += sandeepPaid;
-            });
-            let html = `<div class="summary-grid">
-                <div class="summary-card"><div class="summary-label">Total Spent</div><div class="summary-amount">${getSymbol()}${roundTwoDecimals(totalPaid).toFixed(2)}</div></div>
-                <div class="summary-card secondary"><div class="summary-label">Overall Balance</div><div class="summary-amount">${getSymbol()}${roundTwoDecimals(totalPaid - totalOwes).toFixed(2)}</div></div>
+        function renderSettingsTab() {
+            let html = `<div class="card"><h3 class="section-title">⚙️ Settings & Backup</h3></div>`;
+            
+            html += `<div class="backup-box">
+                <h3>💾 Backup & Restore Your Data</h3>
+                <p style="font-size: 12px; margin-bottom: 12px; color: #666;">
+                    Your data is stored safely on your device. Regularly backup to keep it safe!
+                </p>
+                <div class="backup-buttons">
+                    <button class="btn btn-success" onclick="exportToJSON()" style="width: 100%;">
+                        📥 Download Backup
+                    </button>
+                    <button class="btn btn-info" onclick="importFromJSON()" style="width: 100%;">
+                        📤 Import Backup
+                    </button>
+                </div>
+                <div class="backup-info">
+                    <strong>How it works:</strong><br>
+                    ✅ <strong>Download:</strong> Save your data as JSON file<br>
+                    ✅ <strong>Store:</strong> Upload to your cloud storage<br>
+                    ✅ <strong>Import:</strong> Download and restore anytime<br>
+                    ✅ Data merges with existing records (no data loss)
+                </div>
             </div>`;
+
+            html += `<div class="card">
+                <h3 class="section-title">☁️ Manual Cloud Backup</h3>
+                <p style="font-size: 12px; margin-bottom: 12px; color: #666;">
+                    Securely store your backup in your personal cloud storage.
+                </p>
+                <div style="background: #f0f7ff; padding: 12px; border-radius: 6px; margin-bottom: 12px; font-size: 12px; line-height: 1.6;">
+                    <strong>📋 Steps:</strong><br>
+                    1️⃣ Click "Download Backup" (above)<br>
+                    2️⃣ Choose a cloud service and upload the file<br>
+                    3️⃣ Your backup is safe & secure! ✅<br><br>
+                    <strong>🔒 Security Note:</strong><br>
+                    Your backups contain your expense data. Only YOU have access to your cloud storage account.
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+                    <button class="btn btn-primary" onclick="openGoogleDrive()" style="width: 100%;">
+                        🔵 Google Drive
+                    </button>
+                    <button class="btn btn-secondary" onclick="openDropbox()" style="width: 100%;">
+                        🔵 Dropbox
+                    </button>
+                </div>
+                <button class="btn btn-info" onclick="openOneDrive()" style="width: 100%;">
+                    🔵 Microsoft OneDrive
+                </button>
+            </div>`;
+
+            html += `<div class="card"><h3 class="section-title">📊 Storage Info</h3>
+                <div style="margin-bottom: 12px;">
+                    <div style="font-size: 12px; margin-bottom: 6px;">
+                        Local Storage Usage: <strong>${(JSON.stringify(state.data).length / 1024).toFixed(1)}KB</strong> / 5MB
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${Math.min(100, (JSON.stringify(state.data).length / (5 * 1024)) * 100)}%"></div>
+                    </div>
+                </div>
+                <p style="font-size: 11px; color: #999;">Your data is stored securely in your browser's local storage.</p>
+            </div>`;
+
+            html += `<div class="card"><h3 class="section-title">🗑️ Danger Zone</h3>
+                <p style="font-size: 12px; margin-bottom: 12px; color: #666;">⚠️ Backup your data before deleting!</p>
+                <button class="btn btn-danger" onclick="clearAllData()" style="width: 100%;">
+                    🗑️ Delete All Data (Cannot be undone)
+                </button>
+            </div>`;
+
             return html;
         }
 
         function getMonthExpenses() {
-            let personal = 0, tripShares = 0, lent = 0, owed = 0;
+            let personal = 0, tripShares = 0;
             state.data.personal.filter(e => e.date && e.date.slice(0, 7) === state.currentMonth).forEach(e => personal += e.amount || 0);
             state.data.trips.filter(t => t.date && t.date.slice(0, 7) === state.currentMonth).forEach(t => {
                 const total = t.expenses ? t.expenses.reduce((s,e)=>s + (e.amount || 0),0) : 0;
                 tripShares += safeDiv(total, t.members ? t.members.length : 1);
             });
-            state.data.lending.filter(l => l.givenDate && l.givenDate.slice(0, 7) === state.currentMonth && !l.isSettled).forEach(l => {
-                if (l.type === 'lent') lent += l.amount || 0;
-                else owed += l.amount || 0;
-            });
-            const total = personal + tripShares + owed;
-            return { personal, tripShares, lendingBalance: owed - lent, total, balance: total - tripShares };
-        }
-
-        function getMonthSettlements() {
-            const settlements = [];
-            state.data.trips.filter(t => t.date && t.date.slice(0, 7) === state.currentMonth).forEach(t => {
-                const total = t.expenses ? t.expenses.reduce((s,e)=>s + (e.amount || 0),0) : 0;
-                if (t.members && t.members.length === 0) return;
-                const perPerson = safeDiv(total, t.members.length);
-                const balances = {};
-                t.members.forEach(m => balances[m] = 0);
-                t.expenses && t.expenses.forEach(e => balances[e.paidBy] = (balances[e.paidBy] || 0) + (e.amount || 0));
-                const temp = {};
-                Object.keys(balances).forEach(m => temp[m] = balances[m] - perPerson);
-                Object.entries(temp).forEach(([p, b]) => {
-                    if (b < -0.01) {
-                        Object.entries(temp).forEach(([c, cb]) => {
-                            if (cb > 0.01 && b < -0.01) {
-                                const amt = Math.min(Math.abs(b), cb);
-                                settlements.push({from: p, to: c, amount: amt});
-                                temp[p] = roundTwoDecimals(temp[p] + amt);
-                                temp[c] = roundTwoDecimals(temp[c] - amt);
-                            }
-                        });
-                    }
-                });
-            });
-            return settlements;
+            const total = personal + tripShares;
+            return { personal, tripShares, total, balance: total };
         }
 
         function togglePersonalForm() { state.showPersonalForm = !state.showPersonalForm; render(); }
@@ -343,25 +602,14 @@
             const amt = validateAmount(document.getElementById('pers-amt').value);
             const cat = document.getElementById('pers-cat').value;
             const date = document.getElementById('pers-date').value;
-            const comment = document.getElementById('pers-comment').value.trim();
-            const receiptFile = document.getElementById('pers-receipt').files[0];
             
-            if (!desc || !amt || !date) { alert('Please fill required fields'); return; }
+            if (!desc || !amt || !date) { showAlert('Please fill required fields', 'error'); return; }
             
-            const reader = new FileReader();
-            const processData = (receipt) => {
-                state.data.personal.push({id: Date.now(), description: desc, amount: roundTwoDecimals(amt), category: cat, date, comment, receipt});
-                saveData();
-                state.showPersonalForm = false;
-                render();
-            };
-            
-            if (receiptFile) {
-                reader.onload = (e) => processData(e.target.result);
-                reader.readAsDataURL(receiptFile);
-            } else {
-                processData(null);
-            }
+            state.data.personal.push({id: Date.now(), description: desc, amount: roundTwoDecimals(amt), category: cat, date});
+            saveData();
+            state.showPersonalForm = false;
+            render();
+            showAlert('✓ Expense added', 'success');
         }
 
         function deletePersonal(id) {
@@ -372,118 +620,87 @@
             }
         }
 
-        function sharePersonalExpense(id) {
-            const exp = state.data.personal.find(e => e.id === id);
-            if (!exp) return;
-            const msg = `📊 Personal Expense\n${exp.description}\n${getSymbol()}${roundTwoDecimals(exp.amount).toFixed(2)}\n📅 ${new Date(exp.date).toLocaleDateString()}\n🏷️ ${exp.category}${exp.comment ? '\n💬 ' + exp.comment : ''}`;
-            window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
-        }
-
         function createTrip() {
             const name = validateText(document.getElementById('trip-name').value);
             const date = document.getElementById('trip-date').value;
             const memberText = document.getElementById('trip-members').value;
-            const members = [OWNER, ...memberText.split(',').map(m => validateText(m)).filter(m => m && m !== OWNER)];
-            if (!name || !date || members.length < 2) { alert('Please enter trip name, date, and at least one other member'); return; }
-            state.data.trips.push({id: Date.now(), name, date, members, expenses: [], status: 'active'});
+            const memberList = memberText.split(',').map(m => validateText(m)).filter(m => m && m !== OWNER);
+            const uniqueMembers = [OWNER, ...new Set(memberList)];
+            
+            if (!name || !date || uniqueMembers.length < 2) { 
+                showAlert('Please enter trip name, date, and at least one other member', 'error'); 
+                return; 
+            }
+            
+            state.data.trips.push({id: Date.now(), name, date, members: uniqueMembers, expenses: [], status: 'active'});
             saveData();
             state.showTripForm = false;
             render();
+            showAlert('✓ Trip created', 'success');
         }
 
         function selectTrip(id) {
+            if (!id) {
+                showAlert('✗ Error: Trip not found', 'error');
+                switchTab('trips');
+                return;
+            }
+            
             state.selectedTripId = id;
             const trip = state.data.trips.find(t => t.id === id);
-            if (!trip) return;
+            if (!trip) {
+                showAlert('✗ Error: Trip not found', 'error');
+                switchTab('trips');
+                return;
+            }
+            
             const total = trip.expenses ? trip.expenses.reduce((s,e)=>s + (e.amount || 0),0) : 0;
             const perPerson = safeDiv(total, trip.members ? trip.members.length : 1);
             
-            let html = `<button class="btn btn-secondary" onclick="switchTab('trips')">← Back</button><h2 class="section-title">${trip.name || 'Unnamed'}</h2>
+            let html = `<button class="btn btn-secondary" onclick="switchTab('trips')">← Back</button><h2 class="section-title">${trip.name}</h2>
             <div class="summary-grid">
                 <div class="summary-card"><div class="summary-label">Total</div><div class="summary-amount">${getSymbol()}${roundTwoDecimals(total).toFixed(2)}</div></div>
                 <div class="summary-card secondary"><div class="summary-label">Per Person</div><div class="summary-amount">${getSymbol()}${roundTwoDecimals(perPerson).toFixed(2)}</div></div>
-                <div class="summary-card tertiary"><div class="summary-label">Expenses</div><div class="summary-amount">${trip.expenses ? trip.expenses.length : 0}</div></div>
-            </div>`;
-            
-            html += `<div class="card"><h3 class="section-title">👥 Members</h3>
-                <div>${trip.members.map(m => `<span class="member-badge">${m}${m !== OWNER ? '<span class="member-remove" onclick="removeMember(\\'' + m + '\\')" style="cursor:pointer; margin-left:4px;">✕</span>' : ''}</span>`).join('')}</div>
-                <button class="btn btn-warning" onclick="toggleAddMember()" style="margin-top: 8px;">➕ Add Member</button>
-                <div id="add-member-form" style="margin-top: 8px; display:none;">
-                    <input type="text" class="input" id="new-member" placeholder="New member name" style="width: 60%; margin-right: 8px;">
-                    <button class="btn btn-success" onclick="addMemberToTrip()">Add</button>
-                </div>
             </div>`;
             
             html += `<button class="btn btn-primary" onclick="toggleTripExpenseForm()" style="width: 100%; margin: 12px 0;">➕ Add Expense</button>
             <div id="trip-exp-form"></div>
             <div class="card"><h3 class="section-title">💰 Expenses</h3>` + 
             ((!trip.expenses || trip.expenses.length === 0) ? '<div class="empty">No expenses</div>' : trip.expenses.map(e => {
-                let eHtml = `<div class="item"><div class="item-header"><span>${e.description || 'Unnamed'}</span><span>${getSymbol()}${roundTwoDecimals(e.amount).toFixed(2)}</span></div>
-                <div class="item-meta">👤 ${e.paidBy || 'Unknown'} | 📅 ${e.date ? new Date(e.date).toLocaleDateString() : 'No date'}</div>`;
-                if (e.receipt) eHtml += `<div class="receipt-indicator">📷 Receipt attached</div>`;
-                if (e.comment) eHtml += `<div class="comment-box">💬 ${e.comment}</div>`;
-                eHtml += `<div><button class="btn btn-danger btn-small" onclick="deleteTripExpense(${id}, ${e.id})">Delete</button></div></div>`;
-                return eHtml;
+                return `<div class="item"><div class="item-header"><span>${e.description}</span><span>${getSymbol()}${roundTwoDecimals(e.amount).toFixed(2)}</span></div>
+                <div class="item-meta">👤 ${e.paidBy} | 📅 ${e.date ? new Date(e.date).toLocaleDateString() : 'No date'}</div>
+                <button class="btn btn-danger btn-small" onclick="deleteTripExpense(${id}, ${e.id})">Delete</button></div>`;
             }).join('')) + `</div>`;
 
-            const balances = {};
-            (trip.members || []).forEach(m => balances[m] = 0);
-            (trip.expenses || []).forEach(e => balances[e.paidBy] = (balances[e.paidBy] || 0) + (e.amount || 0));
+            html += `<button class="btn btn-success" onclick="endTrip(${id})" style="width: 100%; margin-top: 12px;">🏁 End Trip</button>`;
             
-            html += `<div class="card"><h3 class="section-title">💸 Settlement</h3>`;
-            (trip.members || []).forEach(m => {
-                const paid = balances[m] || 0;
-                const owes = perPerson;
-                const balance = paid - owes;
-                html += `<div class="person-item"><div class="person-name">${m} ${m === OWNER ? '(You)' : ''}</div>
-                    <div class="person-stat">Paid: ${getSymbol()}${roundTwoDecimals(paid).toFixed(2)} | Owes: ${getSymbol()}${roundTwoDecimals(owes).toFixed(2)}</div>
-                    <div class="balance ${balance > 0 ? 'balance-negative' : 'balance-positive'}">${balance > 0 ? '✓ Receive: ' : '✗ Pay: '}${getSymbol()}${roundTwoDecimals(Math.abs(balance)).toFixed(2)}</div></div>`;
-            });
-            html += `</div><button class="btn btn-warning" onclick="shareTrip(${id})" style="margin-top: 12px;">📱 Share Summary</button>
-            <button class="btn btn-success" onclick="endTrip(${id})">End Trip</button>`;
-            
-            document.getElementById('main-content').innerHTML = html;
-        }
-
-        function toggleAddMember() {
-            const form = document.getElementById('add-member-form');
-            form.style.display = form.style.display === 'none' ? 'block' : 'none';
-        }
-
-        function addMemberToTrip() {
-            const trip = state.data.trips.find(t => t.id === state.selectedTripId);
-            const name = validateText(document.getElementById('new-member').value);
-            if (!name || trip.members.includes(name)) { alert('Invalid or duplicate member'); return; }
-            trip.members.push(name);
-            saveData();
-            selectTrip(state.selectedTripId);
-        }
-
-        function removeMember(name) {
-            const trip = state.data.trips.find(t => t.id === state.selectedTripId);
-            trip.members = trip.members.filter(m => m !== name);
-            saveData();
-            selectTrip(state.selectedTripId);
+            const mainContent = document.getElementById('main-content');
+            if (mainContent) mainContent.innerHTML = html;
         }
 
         function toggleTripExpenseForm() {
             const container = document.getElementById('trip-exp-form');
-            if (!container) return;
-            if (container.innerHTML) { container.innerHTML = ''; } else {
+            if (!container) {
+                console.warn('Trip expense form container not found');
+                return;
+            }
+            
+            if (container.innerHTML) { 
+                container.innerHTML = ''; 
+            } else {
                 const trip = state.data.trips.find(t => t.id === state.selectedTripId);
-                if (!trip) return;
+                if (!trip || !trip.members || trip.members.length === 0) {
+                    showAlert('Trip not found or has no members', 'error');
+                    return;
+                }
                 const today = new Date().toISOString().split('T')[0];
                 container.innerHTML = `<div class="card">
                     <div class="form-group"><label class="label">Description</label><input type="text" class="input" id="texp-desc" maxlength="50" placeholder="What was spent on?"></div>
                     <div class="form-row">
                         <div class="form-group"><label class="label">Amount</label><input type="number" class="input" id="texp-amt" min="0" step="0.01" placeholder="0.00"></div>
-                        <div class="form-group"><label class="label">Who Paid</label><select class="input" id="texp-paid">${trip.members.map(m => `<option value="${m}">${m}${m === OWNER ? ' (You)' : ''}</option>`).join('')}</select></div>
+                        <div class="form-group"><label class="label">Who Paid</label><select class="input" id="texp-paid">${trip.members.map(m => `<option value="${m}">${m}</option>`).join('')}</select></div>
                     </div>
-                    <div class="form-row">
-                        <div class="form-group"><label class="label">Date</label><input type="date" class="input" id="texp-date" value="${today}"></div>
-                        <div class="form-group"><label class="label">Receipt</label><input type="file" class="input" id="texp-receipt" accept="image/*"></div>
-                    </div>
-                    <div class="form-group"><label class="label">Comments</label><textarea class="input" id="texp-comment" placeholder="Add any notes..."></textarea></div>
+                    <div class="form-group"><label class="label">Date</label><input type="date" class="input" id="texp-date" value="${today}"></div>
                     <button class="btn btn-success" onclick="addTripExpense()" style="width: 100%;">✓ Add</button>
                 </div>`;
             }
@@ -492,62 +709,75 @@
         function addTripExpense() {
             const desc = validateText(document.getElementById('texp-desc').value);
             const amt = validateAmount(document.getElementById('texp-amt').value);
-            const paid = document.getElementById('texp-paid').value;
+            const paidEl = document.getElementById('texp-paid');
+            const paid = paidEl ? paidEl.value : null;
             const date = document.getElementById('texp-date').value;
-            const comment = document.getElementById('texp-comment').value.trim();
-            const receiptFile = document.getElementById('texp-receipt').files[0];
             
-            if (!desc || !amt || !paid || !date) { alert('Please fill required fields'); return; }
+            if (!desc || !amt || !paid || !date) { showAlert('Please fill all fields', 'error'); return; }
             
-            const reader = new FileReader();
-            const processData = (receipt) => {
-                const trip = state.data.trips.find(t => t.id === state.selectedTripId);
-                if (trip) {
-                    trip.expenses.push({id: Date.now(), description: desc, amount: roundTwoDecimals(amt), paidBy: paid, date, comment, receipt});
-                    saveData();
-                    selectTrip(state.selectedTripId);
-                }
-            };
-            
-            if (receiptFile) {
-                reader.onload = (e) => processData(e.target.result);
-                reader.readAsDataURL(receiptFile);
+            const trip = state.data.trips.find(t => t.id === state.selectedTripId);
+            if (trip && trip.expenses) {
+                trip.expenses.push({id: Date.now(), description: desc, amount: roundTwoDecimals(amt), paidBy: paid, date});
+                saveData();
+                const container = document.getElementById('trip-exp-form');
+                if (container) container.innerHTML = '';
+                selectTrip(state.selectedTripId);
+                showAlert('✓ Expense added', 'success');
             } else {
-                processData(null);
+                showAlert('✗ Error: Trip not found', 'error');
             }
         }
 
         function deleteTripExpense(tripId, expId) {
+            if (!tripId || !expId) {
+                showAlert('✗ Error: Invalid expense', 'error');
+                return;
+            }
             if (confirm('Delete expense?')) {
                 const trip = state.data.trips.find(t => t.id === tripId);
-                if (trip) {
+                if (trip && trip.expenses) {
+                    const originalLength = trip.expenses.length;
                     trip.expenses = trip.expenses.filter(e => e.id !== expId);
-                    saveData();
-                    selectTrip(tripId);
+                    if (trip.expenses.length < originalLength) {
+                        saveData();
+                        selectTrip(tripId);
+                        showAlert('✓ Expense deleted', 'success');
+                    } else {
+                        showAlert('✗ Expense not found', 'error');
+                    }
+                } else {
+                    showAlert('✗ Error: Trip not found', 'error');
                 }
             }
         }
 
         function deleteTrip(id) {
-            if (confirm('Delete this trip? This cannot be undone.')) {
+            if (confirm('Delete trip?')) {
                 state.data.trips = state.data.trips.filter(t => t.id !== id);
+                state.data.lending = state.data.lending.filter(l => l.tripId !== id);
                 saveData();
                 switchTab('trips');
             }
         }
 
-        function shareTrip(id) {
-            const trip = state.data.trips.find(t => t.id === id);
-            const total = trip.expenses ? trip.expenses.reduce((s,e)=>s + (e.amount || 0),0) : 0;
-            const perPerson = safeDiv(total, trip.members ? trip.members.length : 1);
-            let msg = `🎉 TRIP: ${trip.name}\n💰 Total: ${getSymbol()}${roundTwoDecimals(total).toFixed(2)}\nPer Person: ${getSymbol()}${roundTwoDecimals(perPerson).toFixed(2)}\n\n👥 Members:\n${trip.members.join(', ')}`;
-            window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
-        }
-
         function endTrip(id) {
-            if (confirm('End this trip?')) {
+            if (confirm('End trip? This will create settlement records.')) {
                 const trip = state.data.trips.find(t => t.id === id);
-                if (trip) { trip.status = 'completed'; saveData(); switchTab('trips'); }
+                if (trip) {
+                    // Check if settlements already created for this trip
+                    const existingSettlements = state.data.lending.filter(l => l.tripId === id);
+                    if (existingSettlements.length === 0) {
+                        generateTripSettlementLending(trip);
+                    } else {
+                        showAlert('⚠️ Settlements already created for this trip', 'info');
+                    }
+                    trip.status = 'completed'; 
+                    saveData(); 
+                    switchTab('lending');
+                    showAlert('✓ Trip ended. Settlements created.', 'success');
+                } else {
+                    showAlert('✗ Error: Trip not found', 'error');
+                }
             }
         }
 
@@ -555,29 +785,22 @@
             const person = validateText(document.getElementById('lend-person').value);
             const amt = validateAmount(document.getElementById('lend-amt').value);
             const type = document.getElementById('lend-type').value;
-            const date = document.getElementById('lend-date').value;
-            const due = document.getElementById('lend-due').value;
             
-            if (!person || !amt || !date || !due) { alert('Please fill all fields'); return; }
-            if (new Date(due) < new Date(date)) { alert('Due date must be after given date'); return; }
+            if (!person || !amt) { showAlert('Please fill all fields', 'error'); return; }
             
-            state.data.lending.push({id: Date.now(), personName: person, amount: roundTwoDecimals(amt), type, givenDate: date, dueDate: due, isSettled: false});
+            const today = new Date().toISOString().split('T')[0];
+            state.data.lending.push({id: Date.now(), personName: person, amount: roundTwoDecimals(amt), type, givenDate: today, dueDate: today, isSettled: false, source: 'manual', status: 'confirmed'});
             saveData();
             state.showLendingForm = false;
             render();
+            showAlert('✓ Record added', 'success');
         }
 
         function settleLending(id) {
             if (confirm('Mark as settled?')) {
                 const lending = state.data.lending.find(l => l.id === id);
-                if (lending) { lending.isSettled = true; lending.settledDate = new Date().toISOString(); saveData(); render(); }
+                if (lending) { lending.isSettled = true; saveData(); render(); }
             }
-        }
-
-        function shareLending(id) {
-            const lend = state.data.lending.find(l => l.id === id);
-            const msg = `💰 ${lend.type === 'lent' ? 'Lent to' : 'Owe'} ${lend.personName}\n${getSymbol()}${roundTwoDecimals(lend.amount).toFixed(2)}\n📅 Due: ${new Date(lend.dueDate).toLocaleDateString()}`;
-            window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
         function deleteLending(id) {
@@ -588,6 +811,23 @@
             }
         }
 
+        // ============ CLOUD STORAGE HELPERS ============
+        function openGoogleDrive() {
+            window.open('https://drive.google.com', '_blank');
+            showAlert('📂 Google Drive opened. Upload your backup file there!', 'info');
+        }
+
+        function openDropbox() {
+            window.open('https://www.dropbox.com', '_blank');
+            showAlert('📂 Dropbox opened. Upload your backup file there!', 'info');
+        }
+
+        function openOneDrive() {
+            window.open('https://onedrive.live.com', '_blank');
+            showAlert('📂 OneDrive opened. Upload your backup file there!', 'info');
+        }
+
+        // ============ INITIALIZATION ============
         document.getElementById('currency').value = state.currency;
         document.getElementById('month-selector').value = state.currentMonth;
         render();
